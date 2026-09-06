@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smash Angin Badminton Queue Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2 rounded-xl">
+                    <i class="fas fa-shuttlecock text-2xl text-yellow-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Smash Angin Badminton</h1>
+                    <p class="text-xs text-indigo-200">Sistem Antrian & Matchmaking Cerdas</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openResetModal()" class="bg-indigo-700 hover:bg-indigo-800 text-xs px-3 py-1.5 rounded-lg border border-indigo-500 transition font-medium">
+                    <i class="fas fa-redo mr-1"></i> Reset Sesi
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- STATS BAR -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Pemain</p>
+                    <h3 id="statTotal" class="text-xl font-bold text-slate-700">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Hadir</p>
+                    <h3 id="statHadir" class="text-xl font-bold text-green-600">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center font-bold">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Di Lapangan</p>
+                    <h3 id="statPlaying" class="text-xl font-bold text-indigo-600">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                    <i class="fas fa-table-tennis"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Antrian Game</p>
+                    <h3 id="statQueue" class="text-xl font-bold text-amber-600">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                    <i class="fas fa-list-ol"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: MATCHMAKER & QUEUE -->
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Match Creator -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                <div class="flex flex-col border-b border-slate-100 pb-3 mb-4 gap-1">
+                    <h2 class="text-base font-bold text-slate-800"><i class="fas fa-magic mr-2 text-indigo-500"></i>Buat Pertandingan Otomatis</h2>
+                    <p class="text-xs text-slate-500">Sistem mengacak pemain <span class="font-bold text-green-600">Hadir</span> (bukan wasit/sedang main), memprioritaskan yang <span class="font-bold text-indigo-600">&lt; 3x main</span>, dan menyusun berdasarkan bintang.</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row items-end gap-3">
+                    <div class="w-full sm:w-1/2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Strategi Matchmaking</label>
+                        <select id="autoMatchType" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="mix">Campur (Seimbangkan Level Tinggi & Low)</option>
+                            <option value="similar">Level Serupa (Satu Level Bintang)</option>
+                        </select>
+                    </div>
+                    <div class="w-full sm:w-1/2">
+                        <button onclick="generateAutoMatch()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-sm flex justify-center items-center">
+                            <i class="fas fa-play mr-2 text-xs"></i> Buat & Antrikan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match Queue List -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                    <h2 class="text-base font-bold text-slate-800"><i class="fas fa-stream mr-2 text-indigo-500"></i>Antrian & Lapangan Aktif</h2>
+                    <span id="queueCountBadge" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-semibold">0 Antrian</span>
+                </div>
+                <div id="matchQueue" class="space-y-3">
+                    <!-- Dynamic Matches -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: PLAYERS MANAGEMENT -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 mb-4 gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800"><i class="fas fa-users mr-2 text-indigo-500"></i>Daftar Pemain</h2>
+                    <p class="text-xs text-slate-500">Kelola kehadiran, level bintang, dan status wasit.</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button onclick="openAddModal()" class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                        <i class="fas fa-user-plus mr-1"></i> Tambah Pemain
+                    </button>
+                    <button onclick="openBulkModal()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow-sm">
+                        <i class="fas fa-file-excel mr-1"></i> Bulk Upload
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex flex-wrap gap-1 mb-4 text-xs">
+                <button onclick="setFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-lg font-medium bg-indigo-50 text-indigo-600 transition">Semua</button>
+                <button onclick="setFilter('hadir')" id="filter-hadir" class="px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 transition">Hadir</button>
+                <button onclick="setFilter('member')" id="filter-member" class="px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 transition">Member</button>
+                <button onclick="setFilter('visit')" id="filter-visit" class="px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 transition">Visit</button>
+            </div>
+
+            <!-- Player List Container -->
+            <div id="playerList" class="space-y-2">
+                <!-- Dynamic Player Cards -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: ADD SINGLE PLAYER -->
+    <div id="addPlayerModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base">Tambah Pemain Baru</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Pemain</label>
+                    <input type="text" id="inputName" placeholder="Masukkan nama..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Tipe</label>
+                        <select id="inputType" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="Member">Member</option>
+                            <option value="Visit">Visit</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Level Bintang</label>
+                        <select id="inputLevel" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 bg-white">
+                            <option value="1">⭐ (Low)</option>
+                            <option value="2" selected>⭐⭐ (Medium)</option>
+                            <option value="3">⭐⭐⭐ (High)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button onclick="closeAddModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-semibold transition">Batal</button>
+                <button onclick="submitAddPlayer()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition shadow-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: BULK UPLOAD -->
+    <div id="bulkModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base">Bulk Upload Nama Pemain</h3>
+                <button onclick="closeBulkModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Daftar Nama (Satu nama per baris)</label>
+                <textarea id="bulkTextarea" rows="6" placeholder="Budi&#10;Andi&#10;Joko&#10;Siti" class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500"></textarea>
+                <p class="text-[11px] text-slate-400 mt-1">Status awal otomatis <span class="font-semibold text-slate-600">Absen</span> dengan level Bintang 2.</p>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button onclick="closeBulkModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-semibold transition">Batal</button>
+                <button onclick="submitBulkUpload()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition shadow-sm">Proses & Masukkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MESSAGE BOX -->
+    <div id="msgModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center space-y-4">
+            <div id="msgIcon" class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto">
+                <i class="fas fa-info"></i>
+            </div>
+            <div>
+                <h3 id="msgTitle" class="font-bold text-slate-800 text-base">Informasi</h3>
+                <p id="msgBody" class="text-xs text-slate-500 mt-1">Pesan detail...</p>
+            </div>
+            <button onclick="closeMsgModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-xs font-semibold transition shadow-sm">Mengerti</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        let players = JSON.parse(localStorage.getItem('smashPlayers')) || [
+            { id: 'p1', name: 'Budi Santoso', type: 'Member', level: 3, playCount: 0, currentlyPlaying: false, joinedAt: Date.now(), lastPlayed: Date.now(), isPresent: false, isReferee: false },
+            { id: 'p2', name: 'Andi Pratama', type: 'Member', level: 2, playCount: 0, currentlyPlaying: false, joinedAt: Date.now(), lastPlayed: Date.now(), isPresent: false, isReferee: false },
+            { id: 'p3', name: 'Joko Widodo', type: 'Visit', level: 1, playCount: 0, currentlyPlaying: false, joinedAt: Date.now(), lastPlayed: Date.now(), isPresent: false, isReferee: false },
+            { id: 'p4', name: 'Siti Rahma', type: 'Member', level: 2, playCount: 0, currentlyPlaying: false, joinedAt: Date.now(), lastPlayed: Date.now(), isPresent: false, isReferee: false },
+            { id: 'p5', name: 'Rian Utama', type: 'Visit', level: 3, playCount: 0, currentlyPlaying: false, joinedAt: Date.now(), lastPlayed: Date.now(), isPresent: false, isReferee: false }
+        ];
+
+        let matches = JSON.parse(localStorage.getItem('smashMatches')) || [];
+        let currentFilter = 'all';
+        let editingMatchId = null;
+
+        function saveData() {
+            localStorage.setItem('smashPlayers', JSON.stringify(players));
+            localStorage.setItem('smashMatches', JSON.stringify(matches));
+        }
+
+        function generateId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function showMessage(title, body, type = 'info') {
+            document.getElementById('msgTitle').innerText = title;
+            document.getElementById('msgBody').innerText = body;
+            const iconEl = document.getElementById('msgIcon');
+            if(type === 'error') {
+                iconEl.className = 'w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto';
+                iconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            } else {
+                iconEl.className = 'w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl mx-auto';
+                iconEl.innerHTML = '<i class="fas fa-info"></i>';
+            }
+            document.getElementById('msgModal').classList.remove('hidden');
+        }
+
+        function closeMsgModal() {
+            document.getElementById('msgModal').classList.add('hidden');
+        }
+
+        function openAddModal() { document.getElementById('addPlayerModal').classList.remove('hidden'); }
+        function closeAddModal() { document.getElementById('addPlayerModal').classList.add('hidden'); }
+        function openBulkModal() { document.getElementById('bulkModal').classList.remove('hidden'); }
+        function closeBulkModal() { document.getElementById('bulkModal').classList.add('hidden'); }
+
+        function submitAddPlayer() {
+            const name = document.getElementById('inputName').value.trim();
+            const type = document.getElementById('inputType').value;
+            const level = parseInt(document.getElementById('inputLevel').value);
+
+            if (!name) {
+                showMessage("Validasi", "Nama pemain tidak boleh kosong.", "error");
+                return;
+            }
+
+            const newPlayer = {
+                id: generateId(),
+                name: name,
+                type: type,
+                level: level,
+                playCount: 0,
+                currentlyPlaying: false,
+                joinedAt: Date.now(),
+                lastPlayed: Date.now(),
+                isPresent: false, // Default tidak hadir sesuai permintaan
+                isReferee: false
+            };
+
+            players.push(newPlayer);
+            saveData();
+            document.getElementById('inputName').value = '';
+            closeAddModal();
+            renderAll();
+        }
+
+        function submitBulkUpload() {
+            const text = document.getElementById('bulkTextarea').value;
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            if (lines.length === 0) {
+                showMessage("Validasi", "Tidak ada nama yang dimasukkan.", "error");
+                return;
+            }
+
+            const now = Date.now();
+            lines.forEach((name, index) => {
+                players.push({
+                    id: generateId(),
+                    name: name,
+                    type: 'Member',
+                    level: 2,
+                    playCount: 0,
+                    currentlyPlaying: false,
+                    joinedAt: now + index,
+                    lastPlayed: now + index,
+                    isPresent: false, // Default absen
+                    isReferee: false
+                });
+            });
+
+            saveData();
+            document.getElementById('bulkTextarea').value = '';
+            closeBulkModal();
+            renderAll();
+            showMessage("Berhasil", `${lines.length} pemain berhasil ditambahkan dengan status Absen.`);
+        }
+
+        function deletePlayer(id) {
+            players = players.filter(p => p.id !== id);
+            saveData();
+            renderAll();
+        }
+
+        function updatePlayerLevel(id, newLevel) {
+            const p = players.find(x => x.id === id);
+            if (p) {
+                p.level = newLevel;
+                saveData();
+                renderPlayerList();
+            }
+        }
+
+        function togglePresence(id) {
+            const p = players.find(x => x.id === id);
+            if (p) {
+                p.isPresent = !p.isPresent;
+                saveData();
+                renderAll();
+            }
+        }
+
+        function toggleReferee(id) {
+            const p = players.find(x => x.id === id);
+            if (p) {
+                p.isReferee = !p.isReferee;
+                saveData();
+                renderAll();
+            }
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'hadir', 'member', 'visit'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    btn.className = 'px-3 py-1.5 rounded-lg font-medium bg-indigo-50 text-indigo-600 transition';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 transition';
+                }
+            });
+            renderPlayerList();
+        }
+
+        function generateAutoMatch() {
+            const type = document.getElementById('autoMatchType').value; 
+            
+            // Dapatkan pemain yang sedang berada di antrian ('queue') agar tidak ditarik lagi
+            let queuedIds = new Set();
+            matches.filter(m => m.status === 'queue').forEach(m => {
+                m.teamA.forEach(id => queuedIds.add(id));
+                m.teamB.forEach(id => queuedIds.add(id));
+            });
+
+            // Filter: Hadir, Tidak Sedang Main, Bukan Wasit, dan Tidak Sedang di Antrian
+            let available = players.filter(p => p.isPresent && !p.currentlyPlaying && !p.isReferee && !queuedIds.has(p.id));
+            
+            if (available.length < 4) {
+                showMessage("Tidak Cukup Pemain", "Minimal butuh 4 pemain yang Hadir, tidak sedang bermain, tidak sedang di antrian, dan bukan wasit.", "error");
+                return;
+            }
+
+            // Prioritas: Prioritaskan pemain yang jumlah mainnya < 3x terlebih dahulu
+            let underThree = available.filter(p => p.playCount < 3);
+            let pool = underThree.length >= 4 ? underThree : available;
+
+            // ACAK (Randomize) pool pemain agar adil dan tidak berdasarkan urutan list
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            let selected = [];
+
+            if (type === 'mix') {
+                // Ambil 4 teratas dari hasil acak
+                selected = pool.slice(0, 4);
+                
+                // Urutkan berdasarkan level bintang untuk dipasangkan (Tinggi vs Rendah, Menengah vs Menengah)
+                selected.sort((a, b) => b.level - a.level);
+                createMatchObj(selected[0].id, selected[3].id, selected[1].id, selected[2].id);
+                
+            } else if (type === 'similar') {
+                // Cari 4 pemain dari pool teracak yang memiliki level bintang sama
+                let found = false;
+                for (let p of pool) {
+                    let sameLevelGroup = pool.filter(x => x.level === p.level);
+                    if (sameLevelGroup.length >= 4) {
+                        selected = sameLevelGroup.slice(0, 4);
+                        found = true;
+                        break;
+                    }
+                }
+                
+                if (!found) {
+                     // Fallback jika level serupa pas 4 tidak ketemu, ambil 4 teratas dari acakan
+                     selected = pool.slice(0, 4);
+                }
+                
+                createMatchObj(selected[0].id, selected[1].id, selected[2].id, selected[3].id);
+            }
+        }
+
+        function createMatchObj(a1, a2, b1, b2) {
+            const newMatch = {
+                id: generateId(),
+                status: 'queue',
+                teamA: [a1, a2],
+                teamB: [b1, b2],
+                startTime: null
+            };
+            matches.push(newMatch);
+            saveData();
+            renderAll();
+        }
+
+        function startMatch(matchId) {
+            const m = matches.find(x => x.id === matchId);
+            if (m) {
+                m.status = 'playing';
+                m.startTime = Date.now();
+                // Tandai pemain sedang bermain
+                [...m.teamA, ...m.teamB].forEach(id => {
+                    const p = players.find(x => x.id === id);
+                    if (p) p.currentlyPlaying = true;
+                });
+                saveData();
+                renderAll();
+            }
+        }
+
+        function finishMatch(matchId) {
+            const m = matches.find(x => x.id === matchId);
+            if (m) {
+                const now = Date.now();
+                // Tambah playCount dan update lastPlayed
+                [...m.teamA, ...m.teamB].forEach(id => {
+                    const p = players.find(x => x.id === id);
+                    if (p) {
+                        p.playCount += 1;
+                        p.currentlyPlaying = false;
+                        p.lastPlayed = now;
+                    }
+                });
+                // Hapus dari daftar matches
+                matches = matches.filter(x => x.id !== matchId);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function cancelMatch(matchId) {
+            matches = matches.filter(x => x.id !== matchId);
+            saveData();
+            renderAll();
+        }
+
+        function editMatch(id) {
+            editingMatchId = id;
+            renderMatchQueue();
+        }
+
+        function cancelEditMatch() {
+            editingMatchId = null;
+            renderMatchQueue();
+        }
+
+        function saveMatchEdit(id) {
+            const m = matches.find(x => x.id === id);
+            if (m) {
+                const a1 = document.getElementById(`edit-a1-${id}`).value;
+                const a2 = document.getElementById(`edit-a2-${id}`).value;
+                const b1 = document.getElementById(`edit-b1-${id}`).value;
+                const b2 = document.getElementById(`edit-b2-${id}`).value;
+                
+                const selectedSet = new Set([a1, a2, b1, b2]);
+                if (selectedSet.size < 4) {
+                    showMessage("Validasi", "Tidak boleh ada pemain yang sama dalam satu pertandingan.", "error");
+                    return;
+                }
+                
+                m.teamA = [a1, a2];
+                m.teamB = [b1, b2];
+                saveData();
+            }
+            editingMatchId = null;
+            renderAll();
+        }
+
+        function generatePlayerSelect(currentId, selectId) {
+            let html = `<select id="${selectId}" class="text-xs p-1.5 border border-slate-200 rounded bg-white text-slate-700 w-full mb-1 focus:ring-1 focus:ring-indigo-500">`;
+            let eligible = players.filter(p => p.isPresent);
+            
+            if (!eligible.find(p => p.id === currentId)) {
+                 let cp = players.find(x => x.id === currentId);
+                 if (cp) eligible.push(cp);
+            }
+            
+            eligible.sort((a,b) => a.name.localeCompare(b.name));
+            
+            eligible.forEach(p => {
+                let selected = p.id === currentId ? 'selected' : '';
+                html += `<option value="${p.id}" ${selected}>${p.name} (Bntg ${p.level} | Main ${p.playCount}x)</option>`;
+            });
+            html += `</select>`;
+            return html;
+        }
+
+        function renderStats() {
+            document.getElementById('statTotal').innerText = players.length;
+            document.getElementById('statHadir').innerText = players.filter(p => p.isPresent).length;
+            document.getElementById('statPlaying').innerText = players.filter(p => p.currentlyPlaying).length;
+            document.getElementById('statQueue').innerText = matches.filter(m => m.status === 'queue').length;
+            document.getElementById('queueCountBadge').innerText = `${matches.length} Pertandingan`;
+        }
+
+        function renderPlayerList() {
+            const container = document.getElementById('playerList');
+            container.innerHTML = '';
+            
+            let filtered = players.filter(p => {
+                if (currentFilter === 'hadir') return p.isPresent;
+                if (currentFilter === 'member') return p.type === 'Member';
+                if (currentFilter === 'visit') return p.type === 'Visit';
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-8 text-xs">Belum ada data pemain.</div>`;
+                return;
+            }
+
+            filtered.forEach(p => {
+                let countClass = p.playCount >= 3 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
+                                 (p.playCount === 0 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200');
+                                 
+                let statusIndicator = p.currentlyPlaying ? '<span class="flex h-2.5 w-2.5 relative ml-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span></span>' : '';
+
+                let opacityClass = p.isPresent ? 'opacity-150' : 'opacity-60 bg-slate-50/60';
+                let refereeBadge = p.isReferee ? '<span class="bg-purple-50 text-purple-700 text-[10px] px-1.5 py-0.5 rounded-md border border-purple-200 font-bold ml-1"><i class="fas fa-gavel mr-1"></i>Wasit</span>' : '';
+                
+                let hadirBtnClass = p.isPresent ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 font-semibold' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border-slate-200';
+                let hadirText = p.isPresent ? 'Hadir' : 'Absen';
+                let wasitBtnClass = p.isReferee ? 'bg-purple-600 text-white hover:bg-purple-700 border-purple-600' : 'bg-white text-slate-400 hover:bg-slate-100 border-slate-200';
+
+                let starsHtml = '<div class="flex space-x-1">';
+                for(let i=1; i<=3; i++) {
+                    let color = i <= p.level ? 'text-amber-400' : 'text-slate-300';
+                    let icon = i <= p.level ? 'fas' : 'far';
+                    starsHtml += `<i class="${icon} fa-star ${color} cursor-pointer hover:scale-110 transition-transform text-xs" onclick="updatePlayerLevel('${p.id}', ${i})"></i>`;
+                }
+                starsHtml += '</div>';
+
+                const div = document.createElement('div');
+                div.className = `p-3 border border-slate-100 rounded-xl transition shadow-sm ${opacityClass} ${p.isPresent ? 'bg-white' : ''}`;
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center flex-wrap gap-1">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${p.type === 'Member' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-slate-100 text-slate-700 border border-slate-200'}">${p.type}</span>
+                            <span class="font-bold text-slate-800 text-xs sm:text-sm ml-1">${p.name}</span>
+                            ${statusIndicator}
+                            ${refereeBadge}
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="toggleReferee('${p.id}')" class="text-xs px-2 py-1 rounded-lg border ${wasitBtnClass} transition" title="Wasit">
+                                <i class="fas fa-gavel"></i>
+                            </button>
+                            <button onclick="togglePresence('${p.id}')" class="text-xs px-2.5 py-1 rounded-lg border ${hadirBtnClass} transition text-center min-w-[55px]">
+                                ${hadirText}
+                            </button>
+                            <button onclick="deletePlayer('${p.id}')" class="text-slate-300 hover:text-red-500 p-1 transition" title="Hapus">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs border-t border-slate-100 pt-2 mt-1">
+                        <span class="px-2 py-0.5 rounded-md ${countClass} font-semibold">
+                            Main: ${p.playCount}x
+                        </span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] text-slate-400 mr-1">Bintang:</span>
+                            ${starsHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderMatchQueue() {
+            const container = document.getElementById('matchQueue');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (matches.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-8 bg-white rounded-xl border border-dashed border-slate-200 text-xs">Belum ada pertandingan berjalan atau di antrian.</div>`;
+                return;
+            }
+
+            matches.forEach((m) => {
+                const teamA1 = players.find(x => x.id === m.teamA[0]);
+                const teamA2 = players.find(x => x.id === m.teamA[1]);
+                const teamB1 = players.find(x => x.id === m.teamB[0]);
+                const teamB2 = players.find(x => x.id === m.teamB[1]);
+                
+                const isEditing = m.id === editingMatchId;
+                const bgClass = m.status === 'playing' ? 'bg-indigo-50/60 border-indigo-200' : 'bg-white border-slate-200';
+                const statusBadge = m.status === 'playing' 
+                    ? '<span class="bg-indigo-600 text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider flex items-center shadow-sm"><span class="animate-pulse w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>Sedang Main</span>'
+                    : '<span class="bg-slate-100 text-slate-600 text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider border border-slate-200">Antrian</span>';
+
+                const div = document.createElement('div');
+                div.className = `p-4 border rounded-xl shadow-sm mb-3 ${bgClass} transition`;
+                
+                if (isEditing) {
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
+                            <span class="font-bold text-slate-700 text-xs"><i class="fas fa-edit mr-1 text-amber-500"></i> Edit Posisi Pemain</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                            <div class="bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
+                                <span class="font-bold text-[10px] text-blue-700 block mb-2 uppercase tracking-wide">Tim A</span>
+                                ${generatePlayerSelect(m.teamA[0], `edit-a1-${m.id}`)}
+                                ${generatePlayerSelect(m.teamA[1], `edit-a2-${m.id}`)}
+                            </div>
+                            <div class="bg-red-50/50 p-2.5 rounded-lg border border-red-100">
+                                <span class="font-bold text-[10px] text-red-700 block mb-2 uppercase tracking-wide">Tim B</span>
+                                ${generatePlayerSelect(m.teamB[0], `edit-b1-${m.id}`)}
+                                ${generatePlayerSelect(m.teamB[1], `edit-b2-${m.id}`)}
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                            <button onclick="cancelEditMatch()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition">Batal</button>
+                            <button onclick="saveMatchEdit('${m.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm"><i class="fas fa-check mr-1"></i> Simpan</button>
+                        </div>
+                    `;
+                } else {
+                    let actionBtn = '';
+                    let cancelBtn = '';
+                    let editBtn = '';
+                    
+                    if (m.status === 'queue') {
+                        editBtn = `<button onclick="editMatch('${m.id}')" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-2.5 py-1 rounded-lg transition border border-amber-200 mr-2"><i class="fas fa-pen mr-1"></i>Edit</button>`;
+                        actionBtn = `<button onclick="startMatch('${m.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition">Main <i class="fas fa-play ml-1"></i></button>`;
+                        cancelBtn = `<button onclick="cancelMatch('${m.id}')" class="text-slate-300 hover:text-red-500 ml-2 transition p-1" title="Batalkan"><i class="fas fa-trash"></i></button>`;
+                    } else {
+                        actionBtn = `<button onclick="finishMatch('${m.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm transition"><i class="fas fa-check-circle mr-1"></i> Selesai</button>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center mb-3">
+                            ${statusBadge}
+                            <div class="flex items-center">
+                                ${editBtn}
+                                ${actionBtn}
+                                ${cancelBtn}
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-5 gap-2 items-center text-center">
+                            <!-- Team A -->
+                            <div class="col-span-2 bg-blue-50/60 border border-blue-100 rounded-xl p-2.5 flex flex-col justify-center">
+                                <span class="text-[9px] font-bold text-blue-600 uppercase mb-1 tracking-wider bg-blue-100/60 px-2 py-0.5 rounded">Tim A</span>
+                                <span class="font-bold text-slate-800 text-xs truncate">${teamA1 ? teamA1.name : '?'}</span>
+                                <span class="text-[10px] text-slate-400 my-0.5">&</span>
+                                <span class="font-bold text-slate-800 text-xs truncate">${teamA2 ? teamA2.name : '?'}</span>
+                            </div>
+                            
+                            <!-- VS -->
+                            <div class="col-span-1 flex justify-center">
+                                <div class="w-8 h-8 rounded-full bg-amber-400 text-white flex items-center justify-center font-black text-xs shadow-sm border border-white italic">
+                                    VS
+                                </div>
+                            </div>
+
+                            <!-- Team B -->
+                            <div class="col-span-2 bg-red-50/60 border border-red-100 rounded-xl p-2.5 flex flex-col justify-center">
+                                <span class="text-[9px] font-bold text-red-600 uppercase mb-1 tracking-wider bg-red-100/60 px-2 py-0.5 rounded">Tim B</span>
+                                <span class="font-bold text-slate-800 text-xs truncate">${teamB1 ? teamB1.name : '?'}</span>
+                                <span class="text-[10px] text-slate-400 my-0.5">&</span>
+                                <span class="font-bold text-slate-800 text-xs truncate">${teamB2 ? teamB2.name : '?'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        function openResetModal() {
+            if(confirm("Yakin ingin mereset seluruh sesi permainan? Data main kembali ke 0.")) {
+                players.forEach(p => {
+                    p.playCount = 0;
+                    p.currentlyPlaying = false;
+                });
+                matches = [];
+                saveData();
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            renderStats();
+            renderPlayerList();
+            renderMatchQueue();
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            renderAll();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Berkas yang TIDAK ikut auto-deploy ke situs (satu pola per baris, wildcard boleh).
+#
+# v03–v06: salinan di repo sengaja dikosongkan kunci Firebase-nya (apiKey diganti
+# placeholder) supaya repo publik tidak memuat kunci mentah. Versi di server masih
+# memuat kunci aslinya dan masih jalan — jadi JANGAN ditimpa dengan salinan repo.
+v03 (stable).html
+v04.html
+v05.html
+v06.html

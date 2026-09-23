@@ -41,3 +41,21 @@ Aplikasi memakai Firebase untuk login (Anonymous) dan penyimpanan data.
 Pemilik & maintainer: **Benny (benxt13)**.
 
 _Dibuat 23 Sep 2026 — sinkronisasi penuh dari file live smashangin.cloud._
+
+## Deploy otomatis
+
+Situs ini tayang otomatis dari repo ini:
+
+- Setiap perubahan yang masuk ke `main` dikirim ke hosting dalam ~2 menit (pemantau
+  di server Benny, lewat FTPS).
+- Manual dari repo: `python3 tools/smashangin_deploy.py` (laporan saja, default) atau
+  `python3 tools/smashangin_deploy.py --go` (benar-benar unggah).
+- Kredensial FTP tidak pernah disimpan di repo: diambil dari env `FTP_HOST`/`FTP_USER`/
+  `FTP_PASS` atau berkas yang diberikan lewat `--creds`.
+- Berkas yang tidak ikut tayang otomatis ada di `.deployignore`, misalnya salinan
+  `v03`-`v06` di repo (kunci Firebase-nya sengaja dikosongkan) supaya tidak menimpa
+  versi server yang masih jalan.
+- Pengaman: halaman yang memakai login Email/Password ditahan otomatis kalau provider
+  Email/Password di Firebase Authentication masih mati - kalau dipaksa tayang, panel
+  admin jadi tidak bisa dibuka.
+- Berkas baru harus ditaruh di akar repo (bukan subfolder) agar ikut ter-deploy.

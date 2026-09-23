@@ -24,9 +24,17 @@ Repo kolaborasi untuk situs **smashangin.cloud** — badminton manager komunitas
 - File versi lama jangan dihapus; nama file = arsip riwayat.
 
 
-## Catatan keamanan
+## Firebase
 
-Versi lama `v03`-`v06` memuat konfigurasi Firebase. Di repo ini nilai `apiKey`-nya sudah diganti placeholder `MASUKAN_API_KEY_ANDA_DISINI` (isi dengan kunci milikmu sendiri kalau mau menjalankan versi itu).
+Aplikasi memakai Firebase untuk login (Anonymous) dan penyimpanan data.
+
+- Versi terbaru (`index.html`, `v07.html` ke atas) menyimpan konfigurasi Firebase dalam bentuk base64 di variabel `encConfig`. Ambil nilainya dengan:
+  ```bash
+  python3 tools/get-firebase-config.py            # default index.html
+  python3 tools/get-firebase-config.py v19.html
+  ```
+- Versi lama `v03`-`v06` memuat konfigurasi mentah — di repo ini `apiKey`-nya sudah diganti placeholder `MASUKAN_API_KEY_ANDA_DISINI` (isi sendiri kalau perlu menjalankan versi itu).
+- ⚠️ Proyek `smash-angin` adalah **produksi** (data member asli). Untuk eksperimen, buat project Firebase sendiri — caranya ada di [`FIREBASE-SETUP.md`](FIREBASE-SETUP.md).
 
 ## Kontak
 

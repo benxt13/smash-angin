@@ -12,3 +12,18 @@
    php_flag log_errors On
 </IfModule>
 # END cPanel-generated php ini directives, do not edit
+
+# === SMASHANGIN ROOT FIX (2026-09-22) ===
+# Root domain harus menyajikan index.html. Direktif induk /public_html/.htaccess
+# (DirectoryIndex index.php + Options -Indexes) membuat "/" tanpa index.php -> 403.
+DirectoryIndex index.html index.htm index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # http -> https (host tetap; hanya host smashangin.cloud / www)
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP_HOST} ^(?:www\.)?smashangin\.cloud$ [NC]
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+    # "/" tanpa index -> sajikan index.html langsung
+    RewriteRule ^$ /index.html [L]
+</IfModule>
+# === END SMASHANGIN ROOT FIX ===

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smash Angin Badminton Manager</title>
+    <!-- Favicon -->
+    <link rel="icon" href="logo-smash-angin.jpg" type="image/jpeg">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- html2canvas for Pamphlet Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .badge { @apply text-[10px] font-bold px-2 py-0.5 rounded-md border; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Pamphlet Hidden Container */
+        #pamphlet-container {
+            position: absolute; left: -9999px; top: -9999px;
+            width: 800px; height: 1000px;
+            background-image: linear-gradient(to bottom right, #1e3a8a, #0f172a);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-family: 'Inter', sans-serif; color: white; text-align: center;
+        }
+
+        /* Share WA Hidden Container (A4 Portrait) */
+        #wa-share-container {
+            position: absolute; left: -9999px; top: -9999px;
+            width: 800px; min-height: 1131px; 
+            background-color: #f8fafc;
+            display: flex; flex-direction: column;
+            font-family: 'Inter', sans-serif; color: #1e3a8a;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-blue-900 min-h-screen pb-12 flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-blue-900 text-white shadow-md sticky top-0 z-30 border-b border-amber-500/20">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3 w-full sm:w-auto">
+                <div class="flex-shrink-0">
+                    <img id="headerLogoSA" src="logo-smash-angin.png" alt="Logo SA" class="h-12 w-auto object-contain bg-white/10 rounded p-1">
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight leading-tight text-amber-400 uppercase drop-shadow-sm">Smash Angin Badminton Club</h1>
+                    <div class="flex items-center gap-2 text-[10px] text-blue-200 mt-0.5 font-medium tracking-wider">
+                        <span id="connStatusPing" class="flex h-2 w-2 relative hidden">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span id="connStatusText">Menghubungkan...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <span id="roleIndicator" class="text-xs bg-white/10 px-2 py-1 rounded-md font-medium border border-white/20"><i class="fas fa-eye mr-1"></i> Viewer</span>
+                <button id="btnAdminLogin" onclick="openAdminModal()" class="bg-amber-500 hover:bg-amber-400 text-blue-900 text-xs px-3 py-1.5 rounded-lg border border-amber-400 transition font-bold shadow-sm">
+                    <i class="fas fa-lock mr-1"></i> Admin
+                </button>
+                <button id="btnAdminLogout" onclick="logoutAdmin()" class="hidden bg-rose-500 hover:bg-rose-600 text-white text-xs px-3 py-1.5 rounded-lg transition font-bold shadow-sm">
+                    Keluar
+                </button>
+            </div>
+        </div>
+        
+        <!-- TABS -->
+        <div class="bg-blue-950 w-full shadow-inner">
+            <div class="max-w-6xl mx-auto px-4 flex gap-4 text-sm font-medium">
+                <button onclick="switchTab('reguler')" id="tab-reguler" class="py-3 px-4 border-b-2 border-amber-400 text-amber-400 transition flex items-center font-bold">
+                    <i class="fas fa-users mr-2"></i> Latihan Reguler
+                </button>
+                <button onclick="switchTab('sparing')" id="tab-sparing" class="py-3 px-4 border-b-2 border-transparent text-blue-300 hover:text-amber-200 transition flex items-center">
+                    <i class="fas fa-trophy mr-2 text-amber-500"></i> Match Sparing
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- ================= VIEW: LATIHAN REGULER ================= -->
+        <div id="view-reguler" class="space-y-6">
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex justify-between">
+                    <div><p class="text-[10px] font-bold text-blue-400 uppercase">Pemain</p><h3 id="statTotal" class="text-xl font-black text-blue-800">0</h3></div>
+                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold"><i class="fas fa-users"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex justify-between">
+                    <div><p class="text-[10px] font-bold text-blue-400 uppercase">Hadir</p><h3 id="statHadir" class="text-xl font-black text-emerald-600">0</h3></div>
+                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex justify-between">
+                    <div><p class="text-[10px] font-bold text-blue-400 uppercase">Sedang Main</p><h3 id="statPlaying" class="text-xl font-black text-amber-600">0</h3></div>
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold"><i class="fas fa-table-tennis"></i></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex justify-between">
+                    <div><p class="text-[10px] font-bold text-blue-400 uppercase">Antrian Game</p><h3 id="statQueue" class="text-xl font-black text-orange-600">0</h3></div>
+                    <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold"><i class="fas fa-list-ol"></i></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Match Queue (Left) -->
+                <div class="lg:col-span-2 flex flex-col gap-6">
+                    <!-- Auto Match Maker -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-blue-100 relative overflow-hidden hidden admin-only">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                        <div class="flex flex-col border-b border-blue-50 pb-3 mb-4 gap-1">
+                            <h2 class="text-base font-bold text-blue-900"><i class="fas fa-magic mr-2 text-emerald-500"></i>Buat Pertandingan Otomatis</h2>
+                            <p class="text-[10px] text-blue-500">Sistem memilih 4 pemain yang Hadir, bukan Wasit, dan sedang beristirahat. Prioritas: < 3x main.</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="w-full sm:w-1/2">
+                                <label class="block text-[10px] font-bold text-blue-600 mb-1">Strategi Matchmaking</label>
+                                <select id="autoMatchTypeReguler" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+                                    <option value="mix">Campur (Seimbangkan Bintang)</option>
+                                    <option value="similar">Level Serupa (Setara)</option>
+                                </select>
+                            </div>
+                            <div class="w-full sm:w-1/2 flex items-end">
+                                <button onclick="generateAutoMatchReguler()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm shadow transition">
+                                    <i class="fas fa-play mr-2"></i> Acak & Antrikan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Queue List -->
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-blue-100 flex-grow flex flex-col min-h-[400px]">
+                        <h2 class="text-base font-bold text-blue-900 border-b border-blue-50 pb-3 mb-4"><i class="fas fa-tv mr-2 text-blue-500"></i>Monitor Lapangan</h2>
+                        <div id="matchQueueReguler" class="space-y-4 flex-grow pr-1 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Player List (Right) -->
+                <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-blue-100 flex flex-col h-[700px]">
+                    <div class="flex justify-between items-center border-b border-blue-50 pb-3 mb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-blue-900"><i class="fas fa-users mr-2 text-blue-500"></i>Daftar Pemain</h2>
+                            <p class="text-[9px] text-blue-400 mt-0.5">Ketuk Bintang utk ubah level.</p>
+                        </div>
+                        <div class="flex gap-1.5 admin-only hidden">
+                            <button onclick="openAddPlayerModal()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs px-2 py-1.5 rounded-lg font-bold" title="Tambah Individu"><i class="fas fa-plus"></i></button>
+                            <button onclick="openBulkPlayerModal()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs px-2 py-1.5 rounded-lg font-bold" title="Paste Masal"><i class="fas fa-list-ol"></i></button>
+                            <button onclick="requestResetReguler()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs px-2 py-1.5 rounded-lg font-bold" title="Reset Latihan"><i class="fas fa-redo"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        <button onclick="setFilterReguler('all')" id="flt-all" class="text-[10px] px-2.5 py-1 rounded border bg-blue-600 text-white font-bold">Semua</button>
+                        <button onclick="setFilterReguler('hadir')" id="flt-hadir" class="text-[10px] px-2.5 py-1 rounded border border-blue-200 text-blue-600 font-bold hover:bg-blue-50">Hadir</button>
+                        <button onclick="setFilterReguler('belum')" id="flt-belum" class="text-[10px] px-2.5 py-1 rounded border border-blue-200 text-blue-600 font-bold hover:bg-blue-50">< 3x Main</button>
+                    </div>
+
+                    <div class="mb-3 relative">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-blue-400 text-xs"></i>
+                        <input type="text" id="searchPlayerReguler" onkeyup="renderPlayerListReguler()" placeholder="Cari nama pemain..." class="w-full pl-8 pr-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs outline-none focus:border-blue-400">
+                    </div>
+                    
+                    <div id="playerListReguler" class="space-y-2 overflow-y-auto pr-1 flex-grow"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: MATCH SPARING ================= -->
+        <div id="view-sparing" class="hidden space-y-6 animate-fade-in">
+            
+            <!-- Sparing Header Info -->
+            <div class="bg-gradient-to-r from-blue-900 to-blue-950 text-white p-5 rounded-2xl shadow-md relative overflow-hidden border border-amber-500/30">
+                <div class="absolute right-0 top-0 opacity-10"><i class="fas fa-trophy text-9xl text-amber-500"></i></div>
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex flex-col text-center md:text-left">
+                        <h2 id="displayEventName" class="text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1">Friendly Match</h2>
+                        <div class="flex items-center gap-3 text-xl md:text-2xl font-black uppercase">
+                            <span>Smash Angin Badminton Club</span> <span class="text-orange-500 text-sm">VS</span> <span id="displayOpponentName" class="text-amber-300">Tim Lawan</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap justify-center admin-only hidden">
+                        <button onclick="openSparingConfigModal()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-bold transition"><i class="fas fa-cog"></i> Setup</button>
+                        <button onclick="generateWAShare()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow"><i class="fab fa-whatsapp"></i> Share Jadwal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Bar -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
+                <h3 class="text-sm font-bold text-blue-900 mb-2 flex justify-between">
+                    <span><i class="fas fa-chart-line mr-2 text-blue-500"></i>Total Partai Dimenangkan</span>
+                </h3>
+                <div class="flex items-center h-8 bg-blue-50 rounded-full overflow-hidden border border-blue-200 relative shadow-inner">
+                    <div id="scoreBarSA" class="h-full bg-blue-600 flex items-center justify-end pr-3 text-xs text-white font-bold transition-all duration-500" style="width: 50%;">0</div>
+                    <div id="scoreBarOP" class="h-full bg-amber-500 flex items-center justify-start pl-3 text-xs text-blue-900 font-bold transition-all duration-500" style="width: 50%;">0</div>
+                </div>
+                <div class="flex justify-between text-xs font-black mt-2 uppercase tracking-wide">
+                    <span class="text-blue-700">Smash Angin: <span id="totalWinsSA">0</span></span>
+                    <span class="text-amber-700"><span id="totalWinsOP">0</span> : <span class="op-name-text">Lawan</span></span>
+                </div>
+            </div>
+
+            <!-- Main Layout Sparing (Jadwal di atas/kiri, Tim di kanan) -->
+            <div class="flex flex-col lg:flex-row gap-6">
+                
+                <!-- Match Sparing Queue (Kiri/Atas) -->
+                <div class="lg:w-2/3 flex flex-col gap-4">
+                    
+                    <!-- Admin Manual Match Creator -->
+                    <div class="admin-only hidden bg-white p-5 rounded-xl shadow-sm border border-blue-200 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                        <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
+                            <h3 class="font-bold text-sm text-blue-900"><i class="fas fa-hand-pointer text-emerald-500 mr-2"></i>Tambah Partai Manual (Bulk)</h3>
+                            <button onclick="requestResetSparingMatches()" class="text-[10px] text-rose-500 font-bold bg-rose-50 px-2 py-1 rounded border border-rose-200"><i class="fas fa-trash"></i> Hapus Jadwal</button>
+                        </div>
+                        <div id="manualSpMatchRowsContainer" class="space-y-2 mb-3 max-h-[300px] overflow-y-auto pr-1">
+                            <!-- Dynamic Rows -->
+                        </div>
+                        <div class="flex gap-2 justify-end pt-2 border-t border-gray-100">
+                            <button onclick="addManualSpMatchRow()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-3 rounded-lg text-xs border border-blue-200">+ Tambah Baris Partai</button>
+                            <button onclick="submitManualSpMatches()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Simpan Semua Partai</button>
+                        </div>
+                    </div>
+
+                    <!-- Queue List -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex-grow flex flex-col min-h-[500px]">
+                        <h3 class="font-bold text-sm text-blue-900 border-b border-blue-50 pb-3 mb-3"><i class="fas fa-list-ol text-blue-500 mr-2"></i>Jadwal Pertandingan</h3>
+                        <div id="sparingMatchQueue" class="space-y-3 flex-grow overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- Rosters (Kanan/Bawah) -->
+                <div class="lg:w-1/3 flex flex-col gap-4">
+                    <!-- Roster SA -->
+                    <div class="bg-white rounded-xl shadow-sm border border-blue-100 flex flex-col h-[400px]">
+                        <div class="p-3 border-b border-blue-50 bg-blue-50 rounded-t-xl flex justify-between items-center">
+                            <h3 class="font-bold text-blue-900 text-sm">Tim Smash Angin</h3>
+                            <button onclick="openAddSpTeamModal('smash_angin')" class="text-[10px] bg-blue-600 text-white px-2 py-1 rounded font-bold admin-only hidden shadow-sm">+ Tim</button>
+                        </div>
+                        <div id="roster-sa" class="p-2 overflow-y-auto flex-grow space-y-1 bg-white"></div>
+                    </div>
+                    <!-- Roster OP -->
+                    <div class="bg-white rounded-xl shadow-sm border border-blue-100 flex flex-col h-[400px]">
+                        <div class="p-3 border-b border-blue-50 bg-amber-50 rounded-t-xl flex justify-between items-center">
+                            <h3 class="font-bold text-amber-900 text-sm op-name-text">Tim Lawan</h3>
+                            <button onclick="openAddSpTeamModal('opponent')" class="text-[10px] bg-amber-500 text-blue-900 px-2 py-1 rounded font-bold admin-only hidden shadow-sm">+ Tim</button>
+                        </div>
+                        <div id="roster-op" class="p-2 overflow-y-auto flex-grow space-y-1 bg-white"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Modal Admin -->
+    <div id="adminModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <h3 class="font-black text-blue-900 text-center text-lg uppercase">Akses Admin</h3>
+            <input type="password" id="inputPin" placeholder="PIN..." class="w-full border-2 border-blue-100 rounded-xl px-4 py-3 text-center text-lg focus:border-amber-400 outline-none">
+            <div class="flex gap-2">
+                <button onclick="closeAdminModal()" class="flex-1 bg-gray-100 text-gray-600 py-2.5 rounded-xl text-sm font-bold">Batal</button>
+                <button onclick="submitAdminLogin()" class="flex-1 bg-amber-500 text-blue-900 py-2.5 rounded-xl text-sm font-black shadow-md">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reguler: Add Player Modal -->
+    <div id="addPlayerModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4">
+            <h3 class="font-black text-blue-900 border-b pb-2">Tambah Pemain Reguler</h3>
+            <div>
+                <label class="block text-[10px] font-bold text-blue-700 mb-1">Nama Pemain</label>
+                <input type="text" id="regInputName" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none">
+            </div>
+            <div class="flex gap-3">
+                <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-blue-700 mb-1">Status</label>
+                    <select id="regInputType" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none bg-white">
+                        <option value="Member">Member</option><option value="Visit">Visit</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-blue-700 mb-1">Bintang</label>
+                    <select id="regInputLevel" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none bg-white">
+                        <option value="3">⭐⭐⭐</option><option value="2" selected>⭐⭐</option><option value="1">⭐</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button onclick="closeAddPlayerModal()" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold text-gray-700">Batal</button>
+                <button onclick="submitAddPlayerReguler()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reguler: Bulk Player Modal -->
+    <div id="bulkPlayerModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <h3 class="font-black text-blue-900 border-b pb-2">Paste Nama Pemain Masal</h3>
+            <div class="bg-blue-50 p-2 rounded text-[10px] text-blue-800">Satu nama per baris. Otomatis diset sebagai 'Visit' dan Bintang 2 (Bisa diedit nanti).</div>
+            <textarea id="regBulkText" rows="6" class="w-full border border-blue-200 rounded-lg p-3 text-sm outline-none resize-none" placeholder="Andi&#10;Budi&#10;Joko"></textarea>
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button onclick="closeBulkPlayerModal()" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold text-gray-700">Batal</button>
+                <button onclick="submitBulkPlayerReguler()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">Simpan Semua</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sparing: Config Modal (Logo Uploads) -->
+    <div id="sparingConfigModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="font-black text-blue-900 border-b pb-2">Setup Sparing</h3>
+            <div>
+                <label class="block text-[10px] font-bold text-blue-700 mb-1">Judul Event</label>
+                <input type="text" id="inputEventName" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-blue-700 mb-1">Nama Tim Lawan</label>
+                <input type="text" id="inputOpponentName" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none">
+            </div>
+            <div class="border-t border-gray-100 pt-3">
+                <label class="block text-[10px] font-bold text-blue-700 mb-1">Ganti Logo Smash Angin (Lokal)</label>
+                <input type="file" id="inputLogoSA" accept="image/*" class="w-full text-xs text-gray-500 mb-2 border p-1 rounded">
+                
+                <label class="block text-[10px] font-bold text-amber-700 mb-1">Ganti Logo Tim Lawan (Lokal)</label>
+                <input type="file" id="inputLogoOP" accept="image/*" class="w-full text-xs text-gray-500 border p-1 rounded">
+                <p class="text-[9px] text-gray-400 mt-1 italic">*Logo tersimpan di browser perangkat Anda saja (sementara) untuk keperluan Share WA & Pamflet.</p>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button onclick="closeSparingConfigModal()" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold text-gray-700">Batal</button>
+                <button onclick="saveSparingConfig()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">Simpan Setup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sparing: Modal Add Bulk Team (3 Columns) -->
+    <div id="addSpTeamModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4 max-h-[90vh] flex flex-col">
+            <h3 id="spAddTitle" class="font-black text-blue-900 border-b pb-2 shrink-0">Tambah Tim</h3>
+            <input type="hidden" id="spAddTeamId">
+            <div class="bg-blue-50 p-2 rounded text-[10px] text-blue-800 shrink-0">Isi baris. Tekan ikon tong sampah untuk menghapus baris.</div>
+            
+            <div id="spBulkTeamRows" class="flex-grow overflow-y-auto space-y-2 pr-1">
+                <!-- JS populated rows -->
+            </div>
+            
+            <div class="shrink-0 pt-3 border-t border-gray-100 flex justify-between items-center">
+                <button onclick="addSpTeamRow()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-1.5 px-3 rounded text-xs border border-emerald-200">+ Tambah Baris</button>
+                <div class="flex gap-2">
+                    <button onclick="closeAddSpTeamModal()" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold text-gray-700">Batal</button>
+                    <button onclick="submitAddSpTeam()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">Simpan Semua</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sparing: Modal Edit Sp Team -->
+    <div id="editSpTeamModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4">
+            <h3 class="font-black text-blue-900 border-b pb-2">Edit Tim Sparing</h3>
+            <input type="hidden" id="editSpTeamId">
+            <div>
+                <label class="block text-[10px] font-bold text-blue-700 mb-1">Nama Tim</label>
+                <input type="text" id="editSpTeamName" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none">
+            </div>
+            <div class="flex gap-3">
+                <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-blue-700 mb-1">Kategori</label>
+                    <select id="editSpTeamCat" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none bg-white">
+                        <option value="MD">MD</option><option value="WD">WD</option><option value="XD">XD</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-[10px] font-bold text-blue-700 mb-1">Grade</label>
+                    <select id="editSpTeamGrade" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none bg-white">
+                        <option value="3">Grade A (3)</option><option value="2">Grade B (2)</option><option value="1">Grade C (1)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button onclick="closeEditSpTeamModal()" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold text-gray-700">Batal</button>
+                <button onclick="submitEditSpTeam()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">Simpan Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sparing: Modal Finish Match -->
+    <div id="finishSpMatchModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4">
+            <h3 class="font-black text-blue-900 border-b pb-2 text-center" id="scoreModalTitle">Skor Pertandingan</h3>
+            <input type="hidden" id="finishSpMatchId">
+            <div class="flex justify-between items-center gap-4">
+                <div class="flex-1 text-center">
+                    <label class="block text-[10px] font-bold text-blue-700 mb-1">Smash Angin</label>
+                    <input type="number" id="scoreSA" min="0" class="w-full border-2 border-blue-200 rounded-xl px-2 py-3 text-2xl font-black text-center outline-none focus:border-blue-500">
+                </div>
+                <div class="font-black text-gray-400 text-xl">-</div>
+                <div class="flex-1 text-center">
+                    <label class="block text-[10px] font-bold text-amber-700 mb-1 op-name-text">Lawan</label>
+                    <input type="number" id="scoreOP" min="0" class="w-full border-2 border-amber-200 rounded-xl px-2 py-3 text-2xl font-black text-center outline-none focus:border-amber-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeFinishSpMatchModal()" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold text-gray-700">Batal</button>
+                <button onclick="submitFinishSpMatch()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Simpan Skor</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages & Confirms -->
+    <div id="msgModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+            <h3 id="msgTitle" class="font-black text-blue-900 text-lg">Info</h3>
+            <p id="msgBody" class="text-sm text-blue-600">Pesan</p>
+            <button onclick="closeMsgModal()" class="w-full bg-blue-600 text-white py-2 rounded-xl text-sm font-bold">Tutup</button>
+        </div>
+    </div>
+    <div id="confirmModal" class="fixed inset-0 bg-blue-950/80 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
+            <h3 id="confirmTitle" class="font-black text-blue-900">Konfirmasi</h3>
+            <p id="confirmBody" class="text-sm text-blue-600">Yakin?</p>
+            <div class="flex gap-2">
+                <button onclick="closeConfirmModal()" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-bold">Batal</button>
+                <button id="confirmYesBtn" class="flex-1 bg-rose-600 text-white py-2 rounded-xl text-sm font-bold">Ya</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pamflet IG Container (Hidden) -->
+    <div id="pamphlet-container">
+        <div class="text-amber-400 font-bold tracking-[0.2em] mb-2 text-xl" id="pamphlet-event-name">FRIENDLY MATCH</div>
+        <div class="flex items-center justify-center gap-6 my-10 w-full px-10">
+            <img id="pamphletLogoSA" src="logo-smash-angin.png" class="w-48 h-48 object-contain bg-white/10 rounded-full p-2 border-4 border-amber-400">
+            <div class="text-5xl font-black italic text-white/50">VS</div>
+            <img id="pamphletLogoOP" src="logo-1st-anniv.jpg" class="w-48 h-48 object-contain bg-white/10 rounded-full p-2 border-4 border-amber-400">
+        </div>
+        <div class="bg-amber-400 text-blue-900 font-black px-8 py-3 rounded-full text-2xl tracking-wide uppercase mt-10">
+            Match Day
+        </div>
+    </div>
+
+    <!-- Share WA Container (Hidden A4 Portrait) -->
+    <div id="wa-share-container">
+        <div class="flex justify-between items-center mb-6 border-b-4 border-amber-400 pb-6">
+            <img id="waLogoSA" src="logo-smash-angin.png" class="h-24 w-24 object-contain">
+            <div class="text-center flex-1 mx-4">
+                <h2 class="text-3xl font-black text-blue-900 uppercase tracking-widest leading-tight" id="wa-event-name">Jadwal Sparing</h2>
+                <p class="text-lg font-bold text-amber-600 uppercase mt-2 tracking-wider">Smash Angin <span class="text-gray-400 mx-2 text-sm">VS</span> <span id="wa-op-name">Lawan</span></p>
+            </div>
+            <img id="waLogoOP" src="logo-1st-anniv.jpg" class="h-24 w-24 object-contain">
+        </div>
+        <div id="wa-fixture-list" class="space-y-4 flex-grow bg-white">
+            <!-- Populated via JS -->
+        </div>
+        <div class="text-center mt-8 pt-4 border-t border-gray-200 text-xs text-gray-400 font-bold uppercase tracking-widest">
+            Generated by Smash Angin System
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // FIREBASE OBFUSCATED CONFIG
+        const encConfig = "eyJhcGlLZXkiOiJBSXphU3lEeHZyX0hVVE9GTENUdXRBbXJ6d0p2UmNqWGtrNTZ5VnciLCJhdXRoRG9tYWluIjoic21hc2gtYW5naW4uZmlyZWJhc2VhcHAuY29tIiwicHJvamVjdElkIjoic21hc2gtYW5naW4iLCJzdG9yYWdlQnVja2V0Ijoic21hc2gtYW5naW4uZmlyZWJhc2VzdG9yYWdlLmFwcCIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiNTYyNjE0ODczNTk0IiwiYXBwSWQiOiIxOjU2MjYxNDg3MzU5NDp3ZWI6NDMzZjAxZjg1N2U2NmNmYzYyYzg0MyJ9";
+        const fbConfig = JSON.parse(atob(encConfig));
+        const appId = atob("c21hc2gtYW5naW4tcHJvZA==");
+
+        let app, db, auth;
+        
+        // Reguler Data
+        let pRef, mRef;
+        let regPlayers = [], regMatches = [];
+        let regFilter = 'all';
+
+        // Sparing Data
+        let scRef, spRef, smRef;
+        let spConfig = { eventName: 'Friendly Match', opponentName: 'Tim Lawan' };
+        let spTeams = [], spMatches = [];
+        
+        // Images (Local Memory for Pamflet)
+        let localLogoSA = null, localLogoOP = null;
+
+        // System state
+        let isAdmin = false, activeTab = 'reguler', confirmCallback = null;
+
+        // Init App
+        window.addEventListener('DOMContentLoaded', async () => {
+            switchTab('reguler');
+            try {
+                app = initializeApp(fbConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Refs
+                pRef = collection(db, 'artifacts', appId, 'public', 'data', 'players');
+                mRef = collection(db, 'artifacts', appId, 'public', 'data', 'matches');
+                scRef = doc(db, 'artifacts', appId, 'public', 'data', 'sparing_config', 'info');
+                spRef = collection(db, 'artifacts', appId, 'public', 'data', 'sparing_teams');
+                smRef = collection(db, 'artifacts', appId, 'public', 'data', 'sparing_matches');
+
+                await signInAnonymously(auth);
+                document.getElementById('connStatusText').innerText = "Online Sync";
+                document.getElementById('connStatusPing').classList.remove('hidden');
+
+                // Listeners
+                onSnapshot(pRef, snap => { regPlayers = snap.docs.map(d => ({id: d.id, ...d.data()})); if(activeTab==='reguler') renderAllReguler(); });
+                onSnapshot(mRef, snap => { regMatches = snap.docs.map(d => ({id: d.id, ...d.data()})); if(activeTab==='reguler') renderAllReguler(); });
+                
+                onSnapshot(scRef, snap => { if(snap.exists()) { spConfig = {...spConfig, ...snap.data()}; updateConfigUI(); }});
+                onSnapshot(spRef, snap => { spTeams = snap.docs.map(d => ({id: d.id, ...d.data()})); if(activeTab==='sparing') renderAllSparing(); });
+                onSnapshot(smRef, snap => { spMatches = snap.docs.map(d => ({id: d.id, ...d.data()})); if(activeTab==='sparing') renderAllSparing(); });
+
+            } catch (err) {
+                console.error("Init Error", err);
+                document.getElementById('connStatusText').innerText = "Offline/Error";
+            }
+        });
+
+        // ----------------------------------------------------
+        // SYSTEM HELPERS & MODALS
+        // ----------------------------------------------------
+        const genId = () => '_' + Math.random().toString(36).substr(2, 9);
+        
+        window.openAdminModal = () => { document.getElementById('inputPin').value=''; document.getElementById('adminModal').classList.remove('hidden'); };
+        window.closeAdminModal = () => document.getElementById('adminModal').classList.add('hidden');
+        window.closeMsgModal = () => document.getElementById('msgModal').classList.add('hidden');
+        window.closeConfirmModal = () => document.getElementById('confirmModal').classList.add('hidden');
+        
+        window.showMessage = (title, body) => {
+            document.getElementById('msgTitle').innerText = title;
+            document.getElementById('msgBody').innerText = body;
+            document.getElementById('msgModal').classList.remove('hidden');
+        };
+        window.showConfirm = (title, body, action) => {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmBody').innerText = body;
+            confirmCallback = action;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        };
+
+        window.switchTab = (tab) => {
+            activeTab = tab;
+            document.getElementById('view-reguler').classList.toggle('hidden', tab !== 'reguler');
+            document.getElementById('view-sparing').classList.toggle('hidden', tab !== 'sparing');
+            
+            document.getElementById('tab-reguler').className = tab === 'reguler' ? 'py-3 px-4 border-b-2 border-amber-400 text-amber-400 transition flex items-center font-bold' : 'py-3 px-4 border-b-2 border-transparent text-blue-300 hover:text-amber-200 transition flex items-center';
+            document.getElementById('tab-sparing').className = tab === 'sparing' ? 'py-3 px-4 border-b-2 border-amber-400 text-amber-400 transition flex items-center font-bold' : 'py-3 px-4 border-b-2 border-transparent text-blue-300 hover:text-amber-200 transition flex items-center';
+
+            if(tab === 'reguler') renderAllReguler(); else renderAllSparing();
+        };
+
+        window.submitAdminLogin = () => {
+            const pin = document.getElementById('inputPin').value;
+            // Base64 of 'Angin13'
+            if (btoa(pin) === 'QW5naW4xMw==') {
+                isAdmin = true;
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                document.getElementById('roleIndicator').innerHTML = '<i class="fas fa-shield-alt mr-1"></i> Admin';
+                document.getElementById('roleIndicator').className = 'text-xs bg-amber-500 text-blue-900 px-2 py-1 rounded-md font-black';
+                document.getElementById('btnAdminLogin').classList.add('hidden');
+                document.getElementById('btnAdminLogout').classList.remove('hidden');
+                
+                activeTab === 'reguler' ? renderAllReguler() : renderAllSparing();
+                closeAdminModal();
+            } else {
+                showMessage("Gagal", "PIN Salah.");
+            }
+        };
+
+        window.logoutAdmin = () => {
+            isAdmin = false;
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+            document.getElementById('roleIndicator').innerHTML = '<i class="fas fa-eye mr-1"></i> Viewer';
+            document.getElementById('roleIndicator').className = 'text-xs bg-white/10 px-2 py-1 rounded-md font-medium border border-white/20';
+            document.getElementById('btnAdminLogin').classList.remove('hidden');
+            document.getElementById('btnAdminLogout').classList.add('hidden');
+            
+            activeTab === 'reguler' ? renderAllReguler() : renderAllSparing();
+        };
+
+        // Stamina Status Helper
+        function getStaminaStatus(player) {
+            if(player.currentlyPlaying) return { text: "Main", color: "text-blue-500", bg:"bg-blue-50", icon: "fa-bolt", fit: false };
+            if(player.playCount === 0) return { text: "Siap", color: "text-emerald-500", bg:"bg-emerald-50", icon: "fa-battery-full", fit: true };
+            let waitMins = Math.floor((Date.now() - player.lastPlayed) / 60000);
+            if (waitMins < 10) return { text: `${waitMins}m`, color: "text-rose-500", bg:"bg-rose-50", icon: "fa-battery-empty", fit: false }; // Lelah
+            if (waitMins < 20) return { text: `${waitMins}m`, color: "text-amber-500", bg:"bg-amber-50", icon: "fa-battery-half", fit: true }; // Recovering
+            return { text: `${waitMins}m`, color: "text-emerald-500", bg:"bg-emerald-50", icon: "fa-battery-full", fit: true }; // Fit
+        }
+
+
+        // ----------------------------------------------------
+        // LOGIC: LATIHAN REGULER
+        // ----------------------------------------------------
+        
+        window.openAddPlayerModal = () => { document.getElementById('regInputName').value=''; document.getElementById('addPlayerModal').classList.remove('hidden'); };
+        window.closeAddPlayerModal = () => document.getElementById('addPlayerModal').classList.add('hidden');
+        window.openBulkPlayerModal = () => { document.getElementById('regBulkText').value=''; document.getElementById('bulkPlayerModal').classList.remove('hidden'); };
+        window.closeBulkPlayerModal = () => document.getElementById('bulkPlayerModal').classList.add('hidden');
+
+        window.submitAddPlayerReguler = async () => {
+            if(!isAdmin) return;
+            const name = document.getElementById('regInputName').value.trim();
+            if(!name) return showMessage("Error", "Nama harus diisi.");
+            const now = Date.now();
+            const id = genId();
+            await setDoc(doc(pRef, id), { id, name, type: document.getElementById('regInputType').value, level: parseInt(document.getElementById('regInputLevel').value), playCount: 0, currentlyPlaying: false, joinedAt: now, lastPlayed: now, isPresent: false, isReferee: false }, {merge:true});
+            closeAddPlayerModal();
+        };
+
+        window.submitBulkPlayerReguler = async () => {
+            if(!isAdmin) return;
+            const lines = document.getElementById('regBulkText').value.split('\n').map(l=>l.trim()).filter(l=>l);
+            if(lines.length === 0) return;
+            const batch = writeBatch(db);
+            const now = Date.now();
+            lines.forEach((name, i) => {
+                const id = genId();
+                batch.set(doc(pRef, id), { id, name, type: 'Visit', level: 2, playCount: 0, currentlyPlaying: false, joinedAt: now+i, lastPlayed: now+i, isPresent: false, isReferee: false }, {merge:true});
+            });
+            await batch.commit();
+            closeBulkPlayerModal();
+        };
+
+        window.deletePlayerReguler = async (id) => { if(isAdmin) showConfirm("Hapus", "Yakin hapus pemain?", async () => await deleteDoc(doc(pRef, id))); };
+        window.updatePlayerLevelReguler = async (id, level) => { if(isAdmin) await setDoc(doc(pRef, id), { level }, {merge:true}); };
+        window.togglePresenceReguler = async (id, state) => { if(isAdmin) { const now=Date.now(); await setDoc(doc(pRef, id), state ? {isPresent:false} : {isPresent:true, lastPlayed:now}, {merge:true}); }};
+        window.toggleRefereeReguler = async (id, state) => { if(isAdmin) await setDoc(doc(pRef, id), { isReferee: !state }, {merge:true}); };
+
+        window.setFilterReguler = (f) => { 
+            regFilter = f;
+            ['all', 'hadir', 'belum'].forEach(id => {
+                const el = document.getElementById('flt-'+id);
+                if(f === id) el.className = 'text-[10px] px-2.5 py-1 rounded border bg-blue-600 text-white font-bold transition';
+                else el.className = 'text-[10px] px-2.5 py-1 rounded border border-blue-200 text-blue-600 font-bold hover:bg-blue-50 transition';
+            });
+            renderPlayerListReguler(); 
+        };
+
+        window.requestResetReguler = () => {
+            if(!isAdmin) return;
+            showConfirm("Reset Latihan", "Kembalikan jumlah main semua ke 0 dan hapus antrian reguler?", async () => {
+                const batch = writeBatch(db);
+                regPlayers.forEach(p => batch.update(doc(pRef, p.id), { playCount: 0, currentlyPlaying: false, lastPlayed: Date.now() }));
+                regMatches.forEach(m => batch.delete(doc(mRef, m.id)));
+                await batch.commit();
+            });
+        };
+
+        window.generateAutoMatchReguler = async () => {
+            if(!isAdmin) return;
+            const type = document.getElementById('autoMatchTypeReguler').value; 
+            
+            let queuedIds = new Set();
+            regMatches.filter(m => m.status === 'queue' || m.status === 'playing').forEach(m => { m.teamA.forEach(id => queuedIds.add(id)); m.teamB.forEach(id => queuedIds.add(id)); });
+
+            let available = regPlayers.filter(p => p.isPresent && !p.isReferee && !p.currentlyPlaying && !queuedIds.has(p.id));
+            
+            // Cek stamina merah
+            let fitPlayers = available.filter(p => getStaminaStatus(p).fit);
+            if(fitPlayers.length < 4) {
+                // If not enough fit, use available but warn later if wanted. Let's just strictly use available
+                if (available.length < 4) return showMessage("Kurang Pemain", "Butuh minimal 4 pemain Hadir yang tidak antri/main.");
+            } else {
+                available = fitPlayers;
+            }
+
+            // Shuffle
+            for (let i = available.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [available[i], available[j]] = [available[j], available[i]]; }
+
+            // Sort priority (playCount ASC, lastPlayed ASC)
+            available.sort((a,b) => {
+                if(a.playCount !== b.playCount) return a.playCount - b.playCount;
+                return a.lastPlayed - b.lastPlayed;
+            });
+
+            let selected = [];
+            if (type === 'mix') {
+                selected = available.slice(0, 4);
+                selected.sort((a, b) => b.level - a.level); // sort by level to balance
+                await createMatchReguler(selected[0].id, selected[3].id, selected[1].id, selected[2].id);
+            } else {
+                let found = false;
+                for (let p of available) {
+                    let same = available.filter(x => x.level === p.level);
+                    if (same.length >= 4) { selected = same.slice(0, 4); found = true; break; }
+                }
+                if (!found) selected = available.slice(0, 4); // Fallback
+                await createMatchReguler(selected[0].id, selected[1].id, selected[2].id, selected[3].id);
+            }
+        };
+
+        async function createMatchReguler(a1, a2, b1, b2) {
+            const id = genId();
+            await setDoc(doc(mRef, id), { id, status: 'queue', teamA: [a1, a2], teamB: [b1, b2], createdAt: Date.now() }, {merge:true});
+        }
+
+        window.startMatchReguler = async (id) => {
+            if(!isAdmin) return;
+            const m = regMatches.find(x => x.id === id);
+            const batch = writeBatch(db);
+            batch.set(doc(mRef, id), { status: 'playing', startTime: Date.now() }, {merge:true});
+            [...m.teamA, ...m.teamB].forEach(pid => batch.set(doc(pRef, pid), { currentlyPlaying: true }, {merge:true}));
+            await batch.commit();
+        };
+
+        window.finishMatchReguler = async (id) => {
+            if(!isAdmin) return;
+            const m = regMatches.find(x => x.id === id);
+            const now = Date.now();
+            const batch = writeBatch(db);
+            batch.delete(doc(mRef, id));
+            [...m.teamA, ...m.teamB].forEach(pid => {
+                const p = regPlayers.find(x => x.id === pid);
+                if (p) batch.set(doc(pRef, pid), { playCount: p.playCount + 1, currentlyPlaying: false, lastPlayed: now }, {merge:true});
+            });
+            await batch.commit();
+        };
+
+        window.cancelMatchReguler = async (id) => { if(isAdmin) showConfirm("Batal", "Hapus dari antrian?", async () => await deleteDoc(doc(mRef, id))); };
+
+        // REGULER RENDERERS
+        window.renderPlayerListReguler = () => {
+            const container = document.getElementById('playerListReguler');
+            const search = (document.getElementById('searchPlayerReguler')?.value || '').toLowerCase();
+            container.innerHTML = '';
+            
+            let filtered = regPlayers.filter(p => {
+                let pS = p.name.toLowerCase().includes(search);
+                if (regFilter === 'hadir') return pS && p.isPresent;
+                if (regFilter === 'belum') return pS && p.playCount < 3;
+                return pS;
+            }).sort((a,b) => a.isPresent === b.isPresent ? a.name.localeCompare(b.name) : (a.isPresent ? -1 : 1));
+
+            filtered.forEach(p => {
+                let isQ = regMatches.some(m => m.status === 'queue' && (m.teamA.includes(p.id) || m.teamB.includes(p.id)));
+                let st = getStaminaStatus(p);
+                
+                // Stars HTML inline
+                let starsHTML = '<div class="flex space-x-0.5">';
+                for(let i=1; i<=3; i++) {
+                    let col = i <= p.level ? 'text-amber-400' : 'text-blue-200';
+                    let ic = i <= p.level ? 'fas' : 'far';
+                    starsHTML += `<i class="${ic} fa-star ${col} text-[10px] ${isAdmin?'cursor-pointer hover:scale-125':''} transition" ${isAdmin?`onclick="updatePlayerLevelReguler('${p.id}', ${i})"`:''}></i>`;
+                }
+                starsHTML += '</div>';
+
+                container.innerHTML += `
+                    <div class="flex flex-col p-2.5 border rounded-xl mb-1.5 shadow-sm ${p.isPresent?'bg-white':'bg-blue-50 opacity-60 grayscale-[30%]'}">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center flex-wrap gap-1">
+                                <span class="font-bold text-xs truncate max-w-full text-blue-900">${p.name}</span>
+                                ${p.isReferee?'<span class="bg-purple-100 text-purple-700 text-[9px] px-1 rounded font-bold">Wasit</span>':''}
+                                ${isQ?'<span class="bg-blue-50 text-blue-500 text-[9px] px-1 rounded font-bold">Antri</span>':''}
+                            </div>
+                            <div class="flex gap-1 shrink-0">
+                                <button ${isAdmin?`onclick="toggleRefereeReguler('${p.id}', ${p.isReferee})"`:''} class="text-[10px] w-6 h-6 rounded border ${p.isReferee?'bg-purple-500 text-white':'bg-white text-gray-400'}"><i class="fas fa-gavel"></i></button>
+                                <button ${isAdmin?`onclick="togglePresenceReguler('${p.id}', ${p.isPresent})"`:''} class="text-[10px] px-2 h-6 rounded border ${p.isPresent?(isAdmin?'bg-emerald-100 text-emerald-700':'bg-emerald-50 text-emerald-600'):'bg-blue-100 text-blue-400'} font-bold">${p.isPresent?'<i class="fas fa-check mr-1"></i>Hadir':'Absen'}</button>
+                                ${isAdmin?`<button onclick="deletePlayerReguler('${p.id}')" class="text-blue-300 hover:text-red-500 ml-1"><i class="fas fa-trash-alt"></i></button>`:''}
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs pt-1 border-t border-blue-50">
+                            <div class="flex gap-1.5 items-center">
+                                <span class="text-[10px] px-1.5 py-0.5 rounded border ${p.playCount>=3?'bg-emerald-50 text-emerald-700':(p.playCount===0?'bg-rose-50 text-rose-700':'bg-amber-50 text-amber-700')} font-bold">Main: ${p.playCount}x</span>
+                                ${p.isPresent ? `<span class="text-[9px] px-1 rounded ${st.bg} ${st.color} font-medium flex items-center"><i class="fas ${st.icon} mr-1"></i>${st.text}</span>` : ''}
+                            </div>
+                            ${starsHTML}
+                        </div>
+                    </div>`;
+            });
+        };
+
+        window.renderMatchQueueReguler = () => {
+            const container = document.getElementById('matchQueueReguler');
+            container.innerHTML = '';
+            let sorted = [...regMatches].sort((a,b) => a.status !== b.status ? (a.status==='playing'?-1:1) : (a.createdAt - b.createdAt));
+            if(sorted.length===0) return container.innerHTML = `<div class="text-center text-blue-400 py-10 bg-blue-50 rounded-xl border border-dashed text-xs">Belum ada antrian reguler.</div>`;
+
+            sorted.forEach((m, idx) => {
+                const getP = id => regPlayers.find(x => x.id === id) || {name:'?'};
+                let ctrl = isAdmin ? (m.status==='playing' ? `<button onclick="finishMatchReguler('${m.id}')" class="bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm">Selesai Game</button>` : `<button onclick="startMatchReguler('${m.id}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold mr-1 shadow-sm">Mulai</button><button onclick="cancelMatchReguler('${m.id}')" class="text-blue-300 hover:text-red-500 p-1"><i class="fas fa-times text-xs"></i></button>`) : '';
+                
+                container.innerHTML += `<div class="p-3 border rounded-xl mb-3 ${m.status==='playing'?'bg-blue-50 ring-1 ring-blue-200':'bg-white shadow-sm'}"><div class="flex justify-between items-center mb-2">${m.status==='playing'?'<span class="bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm animate-pulse">Sedang Main</span>':`<span class="bg-blue-100 text-[9px] px-2 py-0.5 rounded-full font-bold text-blue-600">Antrian #${idx+(regMatches.some(x=>x.status==='playing')?0:1)}</span>`}<div class="flex items-center">${ctrl}</div></div><div class="flex gap-2 text-center items-stretch"><div class="flex-1 bg-blue-50 border border-blue-100 rounded-lg p-2"><div class="font-bold text-sm text-blue-900">${getP(m.teamA[0]).name}</div><div class="text-[9px] text-blue-300 my-0.5">&</div><div class="font-bold text-sm text-blue-900">${getP(m.teamA[1]).name}</div></div><div class="flex items-center"><div class="text-[10px] font-black text-blue-300 italic">VS</div></div><div class="flex-1 bg-amber-50 border border-amber-100 rounded-lg p-2"><div class="font-bold text-sm text-amber-900">${getP(m.teamB[0]).name}</div><div class="text-[9px] text-amber-300 my-0.5">&</div><div class="font-bold text-sm text-amber-900">${getP(m.teamB[1]).name}</div></div></div></div>`;
+            });
+        };
+
+        function renderStatsReguler() {
+            document.getElementById('statTotal').innerText = regPlayers.length;
+            document.getElementById('statHadir').innerText = regPlayers.filter(p => p.isPresent).length;
+            document.getElementById('statPlaying').innerText = regPlayers.filter(p => p.currentlyPlaying).length;
+            document.getElementById('statQueue').innerText = regMatches.filter(m => m.status === 'queue').length;
+        }
+
+        function renderAllReguler() {
+            renderPlayerListReguler();
+            renderMatchQueueReguler();
+            renderStatsReguler();
+        }
+
+
+        // ----------------------------------------------------
+        // LOGIC: MATCH SPARING
+        // ----------------------------------------------------
+        
+        function updateConfigUI() {
+            document.getElementById('displayEventName').innerText = spConfig.eventName || 'Friendly Match';
+            document.getElementById('displayOpponentName').innerText = spConfig.opponentName || 'Tim Lawan';
+            document.querySelectorAll('.op-name-text').forEach(el => el.innerText = spConfig.opponentName || 'Tim Lawan');
+            
+            // Set uploaded logos if exist in session (Base64)
+            if(localLogoSA) { document.getElementById('headerLogoSA').src = localLogoSA; document.getElementById('pamphletLogoSA').src = localLogoSA; document.getElementById('waLogoSA').src = localLogoSA; }
+            if(localLogoOP) { document.getElementById('headerLogoOP').src = localLogoOP; document.getElementById('pamphletLogoOP').src = localLogoOP; document.getElementById('waLogoOP').src = localLogoOP; }
+        }
+
+        // Handle Image upload dynamically using FileReader
+        const readFileAsDataURL = (file) => new Promise(res => {
+            if(!file) return res(null);
+            const r = new FileReader();
+            r.onload = e => res(e.target.result);
+            r.readAsDataURL(file);
+        });
+
+        window.openSparingConfigModal = () => {
+            document.getElementById('inputEventName').value = spConfig.eventName || 'Friendly Match';
+            document.getElementById('inputOpponentName').value = spConfig.opponentName || 'Tim Lawan';
+            document.getElementById('inputLogoSA').value = '';
+            document.getElementById('inputLogoOP').value = '';
+            document.getElementById('sparingConfigModal').classList.remove('hidden');
+        };
+        window.closeSparingConfigModal = () => document.getElementById('sparingConfigModal').classList.add('hidden');
+        
+        window.saveSparingConfig = async () => {
+            if(!isAdmin) return;
+            const data = {
+                eventName: document.getElementById('inputEventName').value.trim() || 'Friendly Match',
+                opponentName: document.getElementById('inputOpponentName').value.trim() || 'Tim Lawan'
+            };
+            
+            // Process images
+            const fileSA = document.getElementById('inputLogoSA').files[0];
+            const fileOP = document.getElementById('inputLogoOP').files[0];
+            if(fileSA) localLogoSA = await readFileAsDataURL(fileSA);
+            if(fileOP) localLogoOP = await readFileAsDataURL(fileOP);
+
+            await setDoc(scRef, data, {merge:true});
+            updateConfigUI();
+            closeSparingConfigModal();
+        };
+
+        // Teams Bulk (3 Columns)
+        window.openAddSpTeamModal = (team) => {
+            document.getElementById('spAddTeamId').value = team;
+            document.getElementById('spAddTitle').innerText = team === 'smash_angin' ? 'Tambah Tim Smash Angin' : `Tambah Tim ${spConfig.opponentName}`;
+            document.getElementById('spBulkTeamRows').innerHTML = '';
+            window.addSpTeamRow();
+            document.getElementById('addSpTeamModal').classList.remove('hidden');
+        };
+        window.closeAddSpTeamModal = () => document.getElementById('addSpTeamModal').classList.add('hidden');
+
+        window.addSpTeamRow = () => {
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 sp-team-row items-center bg-white p-2 border border-blue-100 rounded shadow-sm';
+            div.innerHTML = `
+                <input type="text" class="sp-t-name flex-1 border border-blue-200 rounded p-2 text-xs outline-none focus:border-amber-400" placeholder="Nama Pasangan (Budi / Andi)">
+                <select class="sp-t-cat w-16 sm:w-20 border border-blue-200 rounded p-2 text-xs bg-white outline-none">
+                    <option value="MD">MD</option><option value="WD">WD</option><option value="XD">XD</option>
+                </select>
+                <select class="sp-t-grade w-24 border border-blue-200 rounded p-2 text-[10px] bg-white outline-none">
+                    <option value="3">Grade A</option><option value="2" selected>Grade B</option><option value="1">Grade C</option>
+                </select>
+                <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 px-2 text-xs"><i class="fas fa-trash"></i></button>
+            `;
+            document.getElementById('spBulkTeamRows').appendChild(div);
+        };
+
+        window.submitAddSpTeam = async () => {
+            if(!isAdmin) return;
+            const side = document.getElementById('spAddTeamId').value;
+            const rows = document.querySelectorAll('.sp-team-row');
+            const batch = writeBatch(db);
+            let added = 0;
+            rows.forEach(row => {
+                const name = row.querySelector('.sp-t-name').value.trim();
+                const cat = row.querySelector('.sp-t-cat').value;
+                const level = parseInt(row.querySelector('.sp-t-grade').value);
+                if(name) {
+                    const id = genId();
+                    batch.set(doc(spRef, id), { id, side, name, level, category: cat }, {merge:true});
+                    added++;
+                }
+            });
+            if(added > 0) await batch.commit();
+            closeAddSpTeamModal();
+        };
+
+        // Edit Sp Team
+        window.openEditSpTeamModal = (id) => {
+            const t = spTeams.find(x => x.id === id);
+            if(!t) return;
+            document.getElementById('editSpTeamId').value = id;
+            document.getElementById('editSpTeamName').value = t.name;
+            document.getElementById('editSpTeamCat').value = t.category;
+            document.getElementById('editSpTeamGrade').value = t.level;
+            document.getElementById('editSpTeamModal').classList.remove('hidden');
+        };
+        window.closeEditSpTeamModal = () => document.getElementById('editSpTeamModal').classList.add('hidden');
+        window.submitEditSpTeam = async () => {
+            if(!isAdmin) return;
+            const id = document.getElementById('editSpTeamId').value;
+            const name = document.getElementById('editSpTeamName').value.trim();
+            if(name) {
+                await setDoc(doc(spRef, id), {
+                    name, 
+                    category: document.getElementById('editSpTeamCat').value,
+                    level: parseInt(document.getElementById('editSpTeamGrade').value)
+                }, {merge:true});
+            }
+            closeEditSpTeamModal();
+        };
+
+        window.deleteSpTeamReal = async (id) => { if(isAdmin) showConfirm("Hapus Tim", "Yakin hapus tim ini dari daftar?", async () => await deleteDoc(doc(spRef, id))); }
+
+        // Manual Match Rows Bulk
+        window.addManualSpMatchRow = () => {
+            const c = document.getElementById('manualSpMatchRowsContainer');
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2 manual-match-row bg-gray-50 p-2 rounded border border-blue-100';
+            row.innerHTML = `
+                <select class="m-sa-sel flex-1 border border-blue-200 rounded p-1.5 text-[10px] bg-white"></select>
+                <span class="text-[10px] font-black italic text-gray-400">VS</span>
+                <select class="m-op-sel flex-1 border border-amber-200 rounded p-1.5 text-[10px] bg-white"></select>
+                <button onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 px-1 text-xs"><i class="fas fa-times"></i></button>
+            `;
+            c.appendChild(row);
+            window.populateManualSpSelectors();
+        };
+
+        window.populateManualSpSelectors = () => {
+            if(!isAdmin) return;
+            const buildOpts = (side) => spTeams.filter(t=>t.side===side).map(t=>`<option value="${t.id}">[${t.category}] ${t.name}</option>`).join('');
+            const saOps = '<option value="">-- Tim Smash Angin --</option>' + buildOpts('smash_angin');
+            const opOps = '<option value="">-- Tim Lawan --</option>' + buildOpts('opponent');
+            
+            document.querySelectorAll('.m-sa-sel').forEach(s => { const v=s.value; s.innerHTML=saOps; if(v)s.value=v; });
+            document.querySelectorAll('.m-op-sel').forEach(s => { const v=s.value; s.innerHTML=opOps; if(v)s.value=v; });
+        };
+
+        window.submitManualSpMatches = async () => {
+            if(!isAdmin) return;
+            const rows = document.querySelectorAll('.manual-match-row');
+            const batch = writeBatch(db);
+            let nextPartai = spMatches.length + 1;
+            let added = 0;
+            
+            // Collect currently playing individuals to block input if needed (simulated strict check)
+            let playingIds = new Set();
+            spMatches.filter(m=>m.status==='playing').forEach(m=>{
+                const saT = spTeams.find(t=>t.id===m.teamA);
+                const opT = spTeams.find(t=>t.id===m.teamB);
+                if(saT) saT.name.split('/').map(n=>n.trim()).forEach(n=>playingIds.add(n));
+                if(opT) opT.name.split('/').map(n=>n.trim()).forEach(n=>playingIds.add(n));
+            });
+
+            for(let row of rows) {
+                const idSA = row.querySelector('.m-sa-sel').value;
+                const idOP = row.querySelector('.m-op-sel').value;
+                if(!idSA || !idOP) continue;
+
+                const tSA = spTeams.find(t=>t.id===idSA);
+                const tOP = spTeams.find(t=>t.id===idOP);
+                
+                // Strict check: if any individual is currently playing, block it.
+                let conflict = false;
+                tSA.name.split('/').map(n=>n.trim()).forEach(n => { if(playingIds.has(n)) conflict=true; });
+                tOP.name.split('/').map(n=>n.trim()).forEach(n => { if(playingIds.has(n)) conflict=true; });
+
+                if(conflict) {
+                    showMessage("Gagal", `Pertandingan ditolak. Ada pemain di tim (${tSA.name} atau ${tOP.name}) yang sedang berstatus Main di lapangan.`);
+                    return; // Abort all
+                }
+
+                const id = genId();
+                batch.set(doc(smRef, id), { id, partaiNo: nextPartai, status: 'queue', teamA: idSA, teamB: idOP, createdAt: Date.now()+added }, {merge:true});
+                nextPartai++;
+                added++;
+            }
+
+            if(added > 0) {
+                await batch.commit();
+                document.getElementById('manualSpMatchRowsContainer').innerHTML = '';
+                window.addManualSpMatchRow();
+                showMessage("Berhasil", `${added} partai dimasukkan ke jadwal.`);
+            }
+        };
+
+        window.requestResetSparingMatches = () => {
+            if(!isAdmin) return;
+            showConfirm("Reset Jadwal", "Hapus semua jadwal pertandingan Sparing yang ada?", async () => {
+                const batch = writeBatch(db);
+                spMatches.forEach(m => batch.delete(doc(smRef, m.id)));
+                await batch.commit();
+            });
+        };
+
+        // Match Actions Sparing
+        window.startSpMatch = async (id) => { if(isAdmin) await setDoc(doc(smRef, id), {status: 'playing'}, {merge:true}); };
+        
+        window.openFinishSpMatchModal = (id, editMode = false) => {
+            if(!isAdmin) return;
+            const m = spMatches.find(x=>x.id===id);
+            if(!m) return;
+            document.getElementById('finishSpMatchId').value = id;
+            document.getElementById('scoreModalTitle').innerText = editMode ? 'Edit Skor' : 'Selesaikan Pertandingan';
+            document.getElementById('scoreSA').value = m.scoreA !== undefined ? m.scoreA : '';
+            document.getElementById('scoreOP').value = m.scoreB !== undefined ? m.scoreB : '';
+            document.getElementById('finishSpMatchModal').classList.remove('hidden');
+        };
+        window.closeFinishSpMatchModal = () => document.getElementById('finishSpMatchModal').classList.add('hidden');
+        
+        window.submitFinishSpMatch = async () => {
+            if(!isAdmin) return;
+            const id = document.getElementById('finishSpMatchId').value;
+            const sA = parseInt(document.getElementById('scoreSA').value) || 0;
+            const sB = parseInt(document.getElementById('scoreOP').value) || 0;
+            await setDoc(doc(smRef, id), { status: 'finished', scoreA: sA, scoreB: sB }, {merge:true});
+            closeFinishSpMatchModal();
+        };
+
+        window.cancelSpMatch = async (id) => { if(isAdmin) showConfirm("Batal", "Hapus antrian?", async () => await deleteDoc(doc(smRef, id))); };
+
+        // Render Sparing
+        function renderAllSparing() {
+            window.populateManualSpSelectors();
+            if(isAdmin && document.getElementById('manualSpMatchRowsContainer').children.length === 0) window.addManualSpMatchRow();
+
+            // Rosters
+            const renderRoster = (side, cid) => {
+                const c = document.getElementById(cid); c.innerHTML = '';
+                const list = spTeams.filter(t => t.side === side);
+                if(list.length === 0) return c.innerHTML = '<div class="text-[10px] text-center p-4 text-gray-400">Belum ada tim</div>';
+                
+                list.forEach(t => {
+                    const stars = isAdmin ? `<span class="text-amber-400 text-[9px] ml-1 tracking-widest">${'⭐'.repeat(t.level)}</span>` : '';
+                    const editBtn = isAdmin ? `<button onclick="openEditSpTeamModal('${t.id}')" class="text-[9px] text-blue-600 hover:text-blue-800 ml-2"><i class="fas fa-pen"></i></button>` : '';
+                    const delBtn = isAdmin ? `<button onclick="deleteSpTeamReal('${t.id}')" class="text-[9px] text-rose-500 hover:text-rose-700 ml-2"><i class="fas fa-trash"></i></button>` : '';
+                    c.innerHTML += `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 border rounded text-[11px] font-bold text-blue-900 shadow-sm transition hover:bg-gray-100">
+                            <div class="truncate pr-2">${t.name} ${stars}</div>
+                            <div class="flex items-center shrink-0">
+                                <span class="bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded text-[8px] font-black">${t.category}</span>
+                                ${editBtn} ${delBtn}
+                            </div>
+                        </div>`;
+                });
+            };
+            renderRoster('smash_angin', 'roster-sa');
+            renderRoster('opponent', 'roster-op');
+
+            // Matches
+            const mq = document.getElementById('sparingMatchQueue'); mq.innerHTML = '';
+            let sortedM = [...spMatches].sort((a,b) => a.partaiNo - b.partaiNo);
+            
+            let winsSA = 0, winsOP = 0;
+            if(sortedM.length===0) mq.innerHTML = '<div class="text-[10px] text-gray-400 text-center py-4">Belum ada jadwal.</div>';
+
+            sortedM.forEach(m => {
+                const tA = spTeams.find(t=>t.id === m.teamA) || {name: '?', category: '?'};
+                const tB = spTeams.find(t=>t.id === m.teamB) || {name: '?', category: '?'};
+                
+                let sBadge = '', ctrl = '', scoreBlock = '';
+                
+                if(m.status === 'queue') {
+                    sBadge = `<span class="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-[9px] font-bold">Menunggu</span>`;
+                    if(isAdmin) ctrl = `<button onclick="startSpMatch('${m.id}')" class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">Mulai</button> <button onclick="cancelSpMatch('${m.id}')" class="text-rose-500 ml-2"><i class="fas fa-times"></i></button>`;
+                } else if (m.status === 'playing') {
+                    sBadge = `<span class="bg-amber-500 text-blue-900 px-2 py-0.5 rounded-full text-[9px] font-black animate-pulse shadow-sm">PLAYING</span>`;
+                    if(isAdmin) ctrl = `<button onclick="openFinishSpMatchModal('${m.id}')" class="bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">Skor Akhir</button>`;
+                } else if (m.status === 'finished') {
+                    sBadge = `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[9px] font-bold"><i class="fas fa-check mr-1"></i>Selesai</span>`;
+                    scoreBlock = `<div class="mt-2 text-center font-black text-lg bg-gray-50 border rounded py-1"><span class="${m.scoreA>m.scoreB?'text-blue-700':'text-gray-400'}">${m.scoreA||0}</span> <span class="text-xs text-gray-400 font-normal mx-2">VS</span> <span class="${m.scoreB>m.scoreA?'text-amber-600':'text-gray-400'}">${m.scoreB||0}</span> ${isAdmin?`<i class="fas fa-pen text-[10px] text-gray-400 cursor-pointer hover:text-blue-500 ml-2" onclick="openFinishSpMatchModal('${m.id}', true)"></i>`:''}</div>`;
+                    if(m.scoreA > m.scoreB) winsSA++;
+                    else if (m.scoreB > m.scoreA) winsOP++;
+                }
+
+                mq.innerHTML += `
+                    <div class="bg-white border rounded-xl p-3 shadow-sm relative overflow-hidden ${m.status==='playing'?'ring-2 ring-amber-400':''}">
+                        ${m.status==='finished'?'<div class="absolute inset-0 bg-gray-100/50 pointer-events-none"></div>':''}
+                        <div class="flex justify-between items-center mb-2 relative z-10">
+                            <div class="flex items-center gap-1.5">
+                                <span class="bg-blue-900 text-white px-1.5 py-0.5 rounded font-black text-[9px] tracking-wider">PARTAI #${m.partaiNo}</span>
+                                <span class="border border-blue-200 text-blue-600 px-1.5 py-0.5 rounded font-bold text-[8px]">${tA.category}</span>
+                            </div>
+                            <div class="flex items-center gap-2">${sBadge} ${ctrl}</div>
+                        </div>
+                        <div class="grid grid-cols-5 gap-2 text-center relative z-10 items-center">
+                            <div class="col-span-2 font-bold text-[11px] sm:text-xs text-blue-900 leading-snug">${tA.name.replace(/\//g, '<br><span class="text-[8px] font-normal text-gray-400">&</span><br>')}</div>
+                            <div class="col-span-1 text-[9px] font-black italic text-gray-300">VS</div>
+                            <div class="col-span-2 font-bold text-[11px] sm:text-xs text-amber-900 leading-snug">${tB.name.replace(/\//g, '<br><span class="text-[8px] font-normal text-gray-400">&</span><br>')}</div>
+                        </div>
+                        ${scoreBlock}
+                    </div>`;
+            });
+
+            // Update Total Wins Score Bar
+            document.getElementById('totalWinsSA').innerText = winsSA;
+            document.getElementById('totalWinsOP').innerText = winsOP;
+            let totalW = winsSA + winsOP;
+            document.getElementById('scoreBarSA').style.width = totalW === 0 ? '50%' : `${(winsSA/totalW)*100}%`;
+            document.getElementById('scoreBarSA').innerText = winsSA > 0 ? winsSA : '';
+            document.getElementById('scoreBarOP').style.width = totalW === 0 ? '50%' : `${(winsOP/totalW)*100}%`;
+            document.getElementById('scoreBarOP').innerText = winsOP > 0 ? winsOP : '';
+        }
+
+        // Export Tools
+        window.generatePamphlet = () => {
+            if(!isAdmin) return;
+            const container = document.getElementById('pamphlet-container');
+            document.getElementById('pamphlet-event-name').innerText = spConfig.eventName || 'FRIENDLY MATCH';
+            document.getElementById('pamphlet-op-name').innerText = spConfig.opponentName || 'Lawan';
+            
+            showMessage("Memproses", "Mengekspor gambar...");
+            setTimeout(() => {
+                html2canvas(container, { scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Pamflet_${spConfig.opponentName}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    closeMsgModal();
+                });
+            }, 800);
+        };
+
+        window.generateWAShare = () => {
+            if(!isAdmin) return;
+            const container = document.getElementById('wa-share-container');
+            const listObj = document.getElementById('wa-fixture-list');
+            document.getElementById('wa-event-name').innerText = spConfig.eventName || 'Jadwal Sparing';
+            document.getElementById('wa-op-name').innerText = spConfig.opponentName || 'Lawan';
+            
+            listObj.innerHTML = '';
+            let sortedM = [...spMatches].sort((a,b) => a.partaiNo - b.partaiNo);
+            sortedM.forEach(m => {
+                const tA = spTeams.find(t=>t.id===m.teamA) || {name: '?'};
+                const tB = spTeams.find(t=>t.id===m.teamB) || {name: '?'};
+                let statusStr = m.status === 'finished' ? `<div class="text-[10px] font-black mt-1 text-gray-800">${m.scoreA} - ${m.scoreB}</div>` : '';
+                
+                listObj.innerHTML += `
+                    <div class="border-2 border-gray-100 rounded-xl p-3 text-center bg-white mb-2 shadow-sm">
+                        <div class="bg-blue-900 text-white text-[9px] font-black px-2 py-0.5 rounded-full inline-block mb-2 tracking-widest">PARTAI #${m.partaiNo}</div>
+                        <div class="flex justify-between items-center px-4">
+                            <div class="font-bold text-xs w-2/5 text-blue-900">${tA.name}</div>
+                            <div class="text-[9px] font-black italic text-gray-300 w-1/5">VS</div>
+                            <div class="font-bold text-xs w-2/5 text-amber-900">${tB.name}</div>
+                        </div>
+                        ${statusStr}
+                    </div>
+                `;
+            });
+
+            showMessage("Memproses", "Membuat jadwal A4...");
+            setTimeout(() => {
+                html2canvas(container, { scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Jadwal_${spConfig.opponentName}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    closeMsgModal();
+                });
+            }, 800);
+        };
+    </script>
+</body>
+</html>

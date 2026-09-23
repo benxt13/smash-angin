@@ -1053,31 +1053,17 @@
             const h = window.regHistoryData.find(x => x.id === id); if(!h) return;
             const container = document.getElementById('historyDetailContainer');
             
-            // Pengaman ketat: hindari crash jika ada data corrupted/null di DB
-            const matches = (h.matches || []).filter(Boolean);
-            const players = (h.players || []).filter(Boolean);
-            
-            let playedM = matches.filter(m => m.status === 'finished');
-            
-            let mHtml = `
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-200 pb-3">
-                <h4 class="font-bold text-sa-navy text-xs uppercase tracking-wider"><i class="fas fa-play text-sa-neon mr-1.5"></i> Pertandingan (${playedM.length})</h4>
-                <button onclick="deleteHistoryReguler('${id}')" class="w-full sm:w-auto text-[10px] bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100 px-3 py-1.5 rounded-lg transition-colors font-bold shadow-sm flex items-center justify-center gap-1.5"><i class="fas fa-trash-can"></i> Hapus Arsip</button>
-            </div>`;
-            
-            if(playedM.length === 0) mHtml += '<div class="text-[10px] text-slate-400 font-medium mb-4">Tidak ada data pertandingan.</div>';
-            
+            let mHtml = '<h4 class="font-bold text-sa-navy text-xs mb-3 border-b border-slate-200 pb-2 uppercase tracking-wider"><i class="fas fa-play text-sa-neon mr-1.5"></i> Pertandingan Diselesaikan ('+(h.matches.filter(m=>m.status==='finished').length)+')</h4>';
+            let playedM = h.matches.filter(m => m.status === 'finished');
+            if(playedM.length===0) mHtml += '<div class="text-[10px] text-slate-400 font-medium">Tidak ada data pertandingan.</div>';
             playedM.forEach((m, idx) => {
-                let getP = pid => players.find(x=>x.id===pid)?.name || '?';
-                let tA = m.teamA || [];
-                let tB = m.teamB || [];
+                let getP = pid => h.players.find(x=>x.id===pid)?.name || '?';
                 let scoreStr = (m.scoreA !== undefined && m.scoreB !== undefined) ? `<span class="ml-2 font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[10px] tracking-wider">${m.scoreA} - ${m.scoreB}</span>` : '';
-                mHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 text-xs shadow-sm flex items-center justify-center gap-2 flex-wrap"><span class="font-black text-sa-neon bg-blue-50 px-2 py-0.5 rounded-md">#${idx+1}</span> <span class="font-semibold text-sa-navy">${getP(tA[0])} & ${getP(tA[1])}</span> <span class="text-slate-300 font-black text-[10px] italic">VS</span> <span class="font-semibold text-sa-plum">${getP(tB[0])} & ${getP(tB[1])}</span> ${scoreStr}</div>`;
+                mHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 text-xs shadow-sm flex items-center justify-center gap-2 flex-wrap"><span class="font-black text-sa-neon bg-blue-50 px-2 py-0.5 rounded-md">#${idx+1}</span> <span class="font-semibold text-sa-navy">${getP(m.teamA[0])} & ${getP(m.teamA[1])}</span> <span class="text-slate-300 font-black text-[10px] italic">VS</span> <span class="font-semibold text-sa-plum">${getP(m.teamB[0])} & ${getP(m.teamB[1])}</span> ${scoreStr}</div>`;
             });
             
-            let hadirList = players.filter(p=>p.isPresent);
+            let hadirList = h.players.filter(p=>p.isPresent);
             let pHtml = '<h4 class="font-bold text-sa-navy text-xs mb-3 mt-6 border-b border-slate-200 pb-2 uppercase tracking-wider"><i class="fas fa-user-group text-emerald-500 mr-1.5"></i> Pemain Hadir ('+hadirList.length+')</h4><div class="flex flex-wrap gap-1.5">';
-            if(hadirList.length === 0) pHtml += '<div class="text-[10px] text-slate-400 font-medium">Tidak ada data pemain hadir.</div>';
             hadirList.forEach(p => {
                 pHtml += `<span class="bg-white text-slate-600 border border-slate-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm">${p.name} <span class="text-sa-neon ml-1">${p.playCount}x</span></span>`;
             });
@@ -1085,17 +1071,6 @@
             
             container.innerHTML = mHtml + pHtml;
         }
-
-        window.deleteHistoryReguler = (id) => {
-            if(!isAdmin) return;
-            window.showConfirm("Hapus Arsip", "Yakin ingin menghapus permanen arsip latihan minggu ini?", async () => {
-                const batch = writeBatch(db);
-                batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reguler_history', id));
-                await batch.commit();
-                document.getElementById('historyDetailContainer').innerHTML = '';
-                window.openHistoryRegulerModal(); // Refresh ulang daftarnya
-            });
-        };
 
         window.closeHistoryRegulerModal = () => document.getElementById('historyRegulerModal').classList.add('hidden');
 

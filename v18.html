@@ -477,43 +477,15 @@
     <!-- Modal Edit Player Reguler -->
     <div id="editPlayerNameModal" class="fixed inset-0 bg-sa-navy/80 backdrop-blur-sm z-[90] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-8 shadow-2xl space-y-5">
-            <h3 class="font-black text-sa-navy text-lg border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fas fa-pen-to-square text-sa-neon"></i> Edit Data Pemain</h3>
+            <h3 class="font-black text-sa-navy text-lg border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fas fa-pen-to-square text-sa-neon"></i> Edit Nama Pemain</h3>
             <input type="hidden" id="editPlayerId">
             <div>
                 <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Nama Lengkap</label>
                 <input type="text" id="editPlayerNameInput" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-sa-neon focus:bg-white focus:ring-1 focus:ring-sa-neon text-sa-navy font-semibold transition-all">
             </div>
-            <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4">Jumlah Main</label>
-                <input type="number" id="editPlayerPlayCountInput" min="0" class="w-full border border-slate-200 bg-slate-50 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-sa-neon focus:bg-white focus:ring-1 focus:ring-sa-neon text-sa-navy font-semibold transition-all">
-            </div>
             <div class="flex gap-3 pt-3 mt-2">
                 <button onclick="closeEditPlayerNameModal()" class="flex-1 bg-white border border-slate-200 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">Batal</button>
                 <button onclick="submitEditPlayerName()" class="flex-1 bg-sa-neon hover:bg-blue-600 text-white py-3 rounded-xl text-sm font-bold shadow-md transition-colors">Simpan</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Input Skor Reguler -->
-    <div id="finishRegMatchModal" class="fixed inset-0 bg-sa-navy/80 backdrop-blur-sm z-[90] hidden flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-6">
-            <h3 class="font-black text-sa-navy text-lg border-b border-slate-100 pb-3 text-center" id="scoreRegModalTitle"><i class="fas fa-flag-checkered text-emerald-500 mr-2"></i> Skor Akhir Reguler</h3>
-            <p class="text-[10px] text-slate-400 text-center -mt-4">Skor akan direkam untuk Analisa Sinergi Tim.</p>
-            <input type="hidden" id="finishRegMatchId">
-            <div class="flex justify-between items-center gap-5">
-                <div class="flex-1 text-center bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                    <label class="block text-[10px] font-black text-sa-neon uppercase tracking-widest mb-3">Tim Kiri</label>
-                    <input type="number" id="scoreRegA" min="0" class="w-full border-none bg-white rounded-xl px-2 py-4 text-4xl font-black text-center outline-none shadow-sm text-sa-navy focus:ring-2 focus:ring-sa-neon">
-                </div>
-                <div class="font-black text-slate-300 text-xl">-</div>
-                <div class="flex-1 text-center bg-pink-50/50 p-4 rounded-2xl border border-pink-100">
-                    <label class="block text-[10px] font-black text-sa-mauve uppercase tracking-widest mb-3">Tim Kanan</label>
-                    <input type="number" id="scoreRegB" min="0" class="w-full border-none bg-white rounded-xl px-2 py-4 text-4xl font-black text-center outline-none shadow-sm text-sa-plum focus:ring-2 focus:ring-sa-mauve">
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 pt-3">
-                <button onclick="closeFinishRegMatchModal()" class="flex-1 bg-white border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
-                <button onclick="submitFinishRegMatch()" class="flex-1 bg-sa-neon hover:bg-blue-600 text-white px-4 py-3 rounded-xl text-sm font-bold shadow-md transition-colors">Simpan Skor</button>
             </div>
         </div>
     </div>
@@ -867,16 +839,13 @@
 
         window.renderMatchQueueReguler = () => {
             const container = document.getElementById('matchQueueReguler'); container.innerHTML = '';
-            
-            // Sembunyikan match yang sudah selesai dari antrian lapangan
-            let activeMatches = regMatches.filter(m => m.status !== 'finished');
-            let sorted = [...activeMatches].sort((a,b) => a.status !== b.status ? (a.status==='playing'?-1:1) : (a.createdAt - b.createdAt));
+            let sorted = [...regMatches].sort((a,b) => a.status !== b.status ? (a.status==='playing'?-1:1) : (a.createdAt - b.createdAt));
             
             if(sorted.length===0) return container.innerHTML = `<div class="flex flex-col items-center justify-center text-slate-400 py-16 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 shadow-inner"><i class="fas fa-couch text-3xl mb-3 opacity-20"></i><span class="text-xs font-semibold uppercase tracking-widest">Belum ada antrian.</span></div>`;
 
             sorted.forEach((m, idx) => {
                 const getP = id => regPlayers.find(x => x.id === id) || {name:'?'};
-                let ctrl = isAdmin ? (m.status==='playing' ? `<button onclick="openFinishRegMatchModal('${m.id}')" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-colors w-full sm:w-auto mt-3 sm:mt-0"><i class="fas fa-flag-checkered mr-1"></i> Selesai & Skor</button>` : `<div class="flex gap-2 w-full sm:w-auto mt-3 sm:mt-0"><button onclick="openEditMatchRegulerModal('${m.id}')" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-colors" title="Edit/Swap"><i class="fas fa-right-left"></i></button><button onclick="startMatchReguler('${m.id}')" class="flex-1 bg-sa-neon hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-colors"><i class="fas fa-play mr-1"></i> Mulai</button><button onclick="cancelMatchReguler('${m.id}')" class="text-red-500 hover:text-white hover:bg-red-500 bg-white border border-red-200 rounded-xl py-2.5 px-4 transition-colors shadow-sm"><i class="fas fa-xmark"></i></button></div>`) : '';
+                let ctrl = isAdmin ? (m.status==='playing' ? `<button onclick="finishMatchReguler('${m.id}')" class="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-colors w-full sm:w-auto mt-3 sm:mt-0">Selesai Game</button>` : `<div class="flex gap-2 w-full sm:w-auto mt-3 sm:mt-0"><button onclick="openEditMatchRegulerModal('${m.id}')" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-colors" title="Edit/Swap"><i class="fas fa-right-left"></i></button><button onclick="startMatchReguler('${m.id}')" class="flex-1 bg-sa-neon hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-colors"><i class="fas fa-play mr-1"></i> Mulai</button><button onclick="cancelMatchReguler('${m.id}')" class="text-red-500 hover:text-white hover:bg-red-500 bg-white border border-red-200 rounded-xl py-2.5 px-4 transition-colors shadow-sm"><i class="fas fa-xmark"></i></button></div>`) : '';
                 
                 container.innerHTML += `
                 <div class="p-4 sm:p-5 border rounded-2xl mb-4 transition-all duration-300 ${m.status==='playing'?'bg-blue-50/30 border-sa-neon shadow-md ring-1 ring-sa-neon/50':'bg-white shadow-card border-slate-200/80'} flex flex-col gap-4 relative overflow-hidden">
@@ -946,7 +915,6 @@
             if(!isAdmin) return; const p = regPlayers.find(x => x.id === id); if(!p) return;
             document.getElementById('editPlayerId').value = id;
             document.getElementById('editPlayerNameInput').value = p.name;
-            document.getElementById('editPlayerPlayCountInput').value = p.playCount || 0;
             document.getElementById('editPlayerNameModal').classList.remove('hidden');
         };
         window.closeEditPlayerNameModal = () => document.getElementById('editPlayerNameModal').classList.add('hidden');
@@ -954,8 +922,7 @@
             if(!isAdmin) return;
             const id = document.getElementById('editPlayerId').value;
             const newName = document.getElementById('editPlayerNameInput').value.trim();
-            const newPlayCount = parseInt(document.getElementById('editPlayerPlayCountInput').value) || 0;
-            if(newName) { await setDoc(doc(pRef, id), { name: newName, playCount: newPlayCount }, {merge:true}); window.closeEditPlayerNameModal(); }
+            if(newName) { await setDoc(doc(pRef, id), { name: newName }, {merge:true}); window.closeEditPlayerNameModal(); }
         };
 
         window.openEditMatchRegulerModal = (matchId) => {
@@ -994,37 +961,12 @@
 
         window.startMatchReguler = async (id) => { if(isAdmin) await setDoc(doc(mRef, id), { status: 'playing' }, {merge:true}); };
         window.cancelMatchReguler = async (id) => { if(isAdmin) await deleteDoc(doc(mRef, id)); };
-        
-        window.openFinishRegMatchModal = (id) => {
+        window.finishMatchReguler = async (id) => {
             if(!isAdmin) return; const m = regMatches.find(x=>x.id===id); if(!m) return;
-            document.getElementById('finishRegMatchId').value = id;
-            document.getElementById('scoreRegA').value = m.scoreA !== undefined ? m.scoreA : '';
-            document.getElementById('scoreRegB').value = m.scoreB !== undefined ? m.scoreB : '';
-            document.getElementById('finishRegMatchModal').classList.remove('hidden');
-        };
-        window.closeFinishRegMatchModal = () => document.getElementById('finishRegMatchModal').classList.add('hidden');
-        
-        window.submitFinishRegMatch = async () => {
-            if(!isAdmin) return; 
-            const id = document.getElementById('finishRegMatchId').value;
-            const m = regMatches.find(x=>x.id===id); if(!m) return;
-            
-            const scoreA = parseInt(document.getElementById('scoreRegA').value) || 0;
-            const scoreB = parseInt(document.getElementById('scoreRegB').value) || 0;
-            
             const batch = writeBatch(db);
-            batch.set(doc(mRef, id), { status: 'finished', finishedAt: Date.now(), scoreA: scoreA, scoreB: scoreB }, {merge:true});
-            
-            // Tambahkan playCount hanya jika statusnya belum finished (menghindari double klik/edit)
-            if (m.status !== 'finished') {
-                [...m.teamA, ...m.teamB].forEach(pid => { 
-                    const p = regPlayers.find(x=>x.id===pid); 
-                    if(p) batch.set(doc(pRef, pid), { playCount: p.playCount + 1 }, {merge:true}); 
-                });
-            }
-            
+            batch.set(doc(mRef, id), { status: 'finished', finishedAt: Date.now() }, {merge:true});
+            [...m.teamA, ...m.teamB].forEach(pid => { const p = regPlayers.find(x=>x.id===pid); if(p) batch.set(doc(pRef, pid), { playCount: p.playCount + 1 }, {merge:true}); });
             await batch.commit();
-            window.closeFinishRegMatchModal();
         };
 
         window.openHistoryRegulerModal = async () => {
@@ -1053,31 +995,16 @@
             const h = window.regHistoryData.find(x => x.id === id); if(!h) return;
             const container = document.getElementById('historyDetailContainer');
             
-            // Pengaman ketat: hindari crash jika ada data corrupted/null di DB
-            const matches = (h.matches || []).filter(Boolean);
-            const players = (h.players || []).filter(Boolean);
-            
-            let playedM = matches.filter(m => m.status === 'finished');
-            
-            let mHtml = `
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 border-b border-slate-200 pb-3">
-                <h4 class="font-bold text-sa-navy text-xs uppercase tracking-wider"><i class="fas fa-play text-sa-neon mr-1.5"></i> Pertandingan (${playedM.length})</h4>
-                <button onclick="deleteHistoryReguler('${id}')" class="w-full sm:w-auto text-[10px] bg-red-50 text-red-500 hover:bg-red-500 hover:text-white border border-red-100 px-3 py-1.5 rounded-lg transition-colors font-bold shadow-sm flex items-center justify-center gap-1.5"><i class="fas fa-trash-can"></i> Hapus Arsip</button>
-            </div>`;
-            
-            if(playedM.length === 0) mHtml += '<div class="text-[10px] text-slate-400 font-medium mb-4">Tidak ada data pertandingan.</div>';
-            
+            let mHtml = '<h4 class="font-bold text-sa-navy text-xs mb-3 border-b border-slate-200 pb-2 uppercase tracking-wider"><i class="fas fa-play text-sa-neon mr-1.5"></i> Pertandingan Diselesaikan ('+(h.matches.filter(m=>m.status==='finished').length)+')</h4>';
+            let playedM = h.matches.filter(m => m.status === 'finished');
+            if(playedM.length===0) mHtml += '<div class="text-[10px] text-slate-400 font-medium">Tidak ada data pertandingan.</div>';
             playedM.forEach((m, idx) => {
-                let getP = pid => players.find(x=>x.id===pid)?.name || '?';
-                let tA = m.teamA || [];
-                let tB = m.teamB || [];
-                let scoreStr = (m.scoreA !== undefined && m.scoreB !== undefined) ? `<span class="ml-2 font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[10px] tracking-wider">${m.scoreA} - ${m.scoreB}</span>` : '';
-                mHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 text-xs shadow-sm flex items-center justify-center gap-2 flex-wrap"><span class="font-black text-sa-neon bg-blue-50 px-2 py-0.5 rounded-md">#${idx+1}</span> <span class="font-semibold text-sa-navy">${getP(tA[0])} & ${getP(tA[1])}</span> <span class="text-slate-300 font-black text-[10px] italic">VS</span> <span class="font-semibold text-sa-plum">${getP(tB[0])} & ${getP(tB[1])}</span> ${scoreStr}</div>`;
+                let getP = pid => h.players.find(x=>x.id===pid)?.name || '?';
+                mHtml += `<div class="bg-white p-3 rounded-xl border border-slate-100 mb-2 text-xs shadow-sm flex items-center justify-center gap-2"><span class="font-black text-sa-neon bg-blue-50 px-2 py-0.5 rounded-md">#${idx+1}</span> <span class="font-semibold text-sa-navy">${getP(m.teamA[0])} & ${getP(m.teamA[1])}</span> <span class="text-slate-300 font-black text-[10px] italic">VS</span> <span class="font-semibold text-sa-plum">${getP(m.teamB[0])} & ${getP(m.teamB[1])}</span></div>`;
             });
             
-            let hadirList = players.filter(p=>p.isPresent);
+            let hadirList = h.players.filter(p=>p.isPresent);
             let pHtml = '<h4 class="font-bold text-sa-navy text-xs mb-3 mt-6 border-b border-slate-200 pb-2 uppercase tracking-wider"><i class="fas fa-user-group text-emerald-500 mr-1.5"></i> Pemain Hadir ('+hadirList.length+')</h4><div class="flex flex-wrap gap-1.5">';
-            if(hadirList.length === 0) pHtml += '<div class="text-[10px] text-slate-400 font-medium">Tidak ada data pemain hadir.</div>';
             hadirList.forEach(p => {
                 pHtml += `<span class="bg-white text-slate-600 border border-slate-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold shadow-sm">${p.name} <span class="text-sa-neon ml-1">${p.playCount}x</span></span>`;
             });
@@ -1085,17 +1012,6 @@
             
             container.innerHTML = mHtml + pHtml;
         }
-
-        window.deleteHistoryReguler = (id) => {
-            if(!isAdmin) return;
-            window.showConfirm("Hapus Arsip", "Yakin ingin menghapus permanen arsip latihan minggu ini?", async () => {
-                const batch = writeBatch(db);
-                batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reguler_history', id));
-                await batch.commit();
-                document.getElementById('historyDetailContainer').innerHTML = '';
-                window.openHistoryRegulerModal(); // Refresh ulang daftarnya
-            });
-        };
 
         window.closeHistoryRegulerModal = () => document.getElementById('historyRegulerModal').classList.add('hidden');
 

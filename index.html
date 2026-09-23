@@ -385,7 +385,7 @@
             <input type="password" id="inputPin" placeholder="••••••••" class="w-full border-2 border-slate-200 rounded-xl px-4 py-4 text-center text-xl tracking-[0.5em] focus:border-sa-neon outline-none text-sa-navy transition-colors bg-slate-50">
             <div class="flex gap-3 pt-2">
                 <button onclick="closeAdminModal()" class="flex-1 bg-white border border-slate-200 text-slate-600 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">Batal</button>
-                <button onclick="submitAdminLogin()" class="flex-1 bg-sa-mauve hover:bg-opacity-90 text-white py-3 rounded-xl text-sm font-black shadow-md transition-all">Login</button>
+                <button id="btnAdminLoginSubmit" onclick="submitAdminLogin()" class="flex-1 bg-sa-mauve hover:bg-opacity-90 text-white py-3 rounded-xl text-sm font-black shadow-md transition-all">Login</button>
             </div>
         </div>
     </div>
@@ -639,12 +639,15 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection, writeBatch, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const encConfig = "eyJhcGlLZXkiOiJBSXphU3lEeHZyX0hVVE9GTENUdXRBbXJ6d0p2UmNqWGtrNTZ5VnciLCJhdXRoRG9tYWluIjoic21hc2gtYW5naW4uZmlyZWJhc2VhcHAuY29tIiwicHJvamVjdElkIjoic21hc2gtYW5naW4iLCJzdG9yYWdlQnVja2V0Ijoic21hc2gtYW5naW4uZmlyZWJhc2VzdG9yYWdlLmFwcCIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiNTYyNjE0ODczNTk0IiwiYXBwSWQiOiIxOjU2MjYxNDg3MzU5NDp3ZWI6NDMzZjAxZjg1N2U2NmNmYzYyYzg0MyJ9";
         const fbConfig = JSON.parse(atob(encConfig));
         const appId = atob("c21hc2gtYW5naW4tcHJvZA==");
+        // Must match ADMIN_EMAIL in firestore.rules. This account's PASSWORD
+        // is what the "PIN" field below actually authenticates with Firebase.
+        const ADMIN_EMAIL = 'admin@smashangin.cloud';
 
         let app, db, auth;
         let pRef, mRef, scRef, spRef, smRef;
@@ -693,9 +696,12 @@
             window.closeConfirmModal();
         };
 
-        window.submitAdminLogin = () => {
+        window.submitAdminLogin = async () => {
             const pin = document.getElementById('inputPin').value;
-            if (btoa(pin) === 'QW5naW4xMw==') {
+            const btn = document.getElementById('btnAdminLoginSubmit');
+            if (btn) { btn.disabled = true; btn.innerText = 'Memeriksa...'; }
+            try {
+                await signInWithEmailAndPassword(auth, ADMIN_EMAIL, pin);
                 isAdmin = true;
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
                 document.getElementById('roleIndicator').innerHTML = '<i class="fas fa-shield-halved mr-1.5"></i> Admin';
@@ -704,12 +710,15 @@
                 document.getElementById('btnAdminLogout').classList.remove('hidden');
                 activeTab === 'reguler' ? renderAllReguler() : renderAllSparing();
                 window.closeAdminModal();
-            } else { 
-                window.showMessage("Akses Ditolak", "PIN yang Anda masukkan salah."); 
+            } catch (err) {
+                console.error("Admin login error", err);
+                window.showMessage("Akses Ditolak", "PIN yang Anda masukkan salah.");
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = 'Login'; }
             }
         };
 
-        window.logoutAdmin = () => {
+        window.logoutAdmin = async () => {
             isAdmin = false;
             document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
             document.getElementById('roleIndicator').innerHTML = '<i class="fas fa-eye mr-1.5"></i> Viewer';
@@ -717,6 +726,7 @@
             document.getElementById('btnAdminLogin').classList.remove('hidden');
             document.getElementById('btnAdminLogout').classList.add('hidden');
             activeTab === 'reguler' ? renderAllReguler() : renderAllSparing();
+            try { await signOut(auth); await signInAnonymously(auth); } catch (err) { console.error("Logout error", err); }
         };
 
         // --- INITIALIZATION ---

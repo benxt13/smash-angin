@@ -50,10 +50,31 @@ Hasilnya tempel sebagai nilai `encConfig`.
 Versi lama `v03`–`v06` di repo ini konfigurasinya **dikosongkan** (placeholder `MASUKAN_API_KEY_ANDA_DISINI`),
 karena berkas itu mengirim kunci mentah. Isi sendiri kalau memang perlu menjalankan versi tersebut.
 
-## 3. ⚠️ Sebelum ngoprek / pull request
+## 3. Jalur data di Firestore
+
+Semua data aplikasi ada di bawah satu jalur:
+
+```
+artifacts/smash-angin-prod/public/data/
+├── players/            daftar pemain
+├── matches/            hasil pertandingan
+├── sparing_teams/      tim sparing
+├── sparing_matches/    hasil sparing
+├── reguler_history/    riwayat sesi reguler
+├── config/reguler_meta
+└── sparing_config/info
+```
+
+`appId` di kode bukan `appId` Firebase, tapi string tetap `smash-angin-prod`
+(`atob("c21hc2gtYW5naW4tcHJvZA==")` di `index.html`).
+
+## 4. ⚠️ Sebelum ngoprek / pull request
 
 - Proyek `smash-angin` adalah **PRODUKSI** — data member, jadwal, dan skor asli ada di sana.
   **Jangan** uji tulis/hapus data di project ini.
+- **Aturan keamanan data** ada di `firestore.rules` (usulan). Uji dulu di project dev, lalu
+  pasang di produksi lewat *Firebase Console → Firestore Database → Rules → Publish*.
+  Lihat juga komentar `ADMIN_EMAIL` di `index.html` — nilainya harus sama dengan aturan tersebut.
 - Untuk development, sebaiknya pakai **project Firebase sendiri** (gratis):
   1. https://console.firebase.google.com → *Add project* (contoh: `smash-angin-dev-namamu`)
   2. *Authentication* → *Sign-in method* → aktifkan **Anonymous**
@@ -63,7 +84,7 @@ karena berkas itu mengirim kunci mentah. Isi sendiri kalau memang perlu menjalan
   6. Jangan commit config project pribadimu kalau tidak perlu
 - Jangan pakai kunci ini untuk aplikasi/keperluan lain, dan jangan kirim kunci ke grup publik.
 
-## 4. Alur kontribusi (pull request)
+## 5. Alur kontribusi (pull request)
 
 ```bash
 git clone https://github.com/benxt13/smash-angin.git
@@ -78,7 +99,7 @@ git push origin fitur/nama-fiturmu
 Lalu buka **Pull Request** ke branch `main` di GitHub. Mohon jangan push langsung ke `main`
 supaya bisa direview dulu.
 
-## 5. Struktur berkas
+## 6. Struktur berkas
 
 | Berkas | Isi |
 |---|---|
@@ -86,9 +107,10 @@ supaya bisa direview dulu.
 | `v01.html` – `v19.html` | arsip versi sebelumnya (`v19` paling baru; beberapa bernama `vNN (stable).html`) |
 | `.htaccess`, `.user.ini`, `php.ini` | pengaturan hosting (redirect HTTPS, index, batas PHP) |
 | `tools/get-firebase-config.py` | pengambil konfigurasi Firebase dari berkas HTML |
+| `firestore.rules` | usulan aturan keamanan Firestore (baca/tulis data) |
 | `README.md`, `FIREBASE-SETUP.md` | dokumentasi |
 
-## 6. Butuh project dev khusus tim?
+## 7. Butuh project dev khusus tim?
 
 Kalau mau, Benny bisa membuatkan project Firebase kedua (mis. `smash-angin-dev`) yang **boleh**
 dipakai bebas oleh tim — config-nya aman dibagikan karena tidak menyimpan data asli.
